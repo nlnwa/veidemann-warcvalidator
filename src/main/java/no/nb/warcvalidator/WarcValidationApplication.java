@@ -17,8 +17,15 @@ public class WarcValidationApplication {
     private static final Logger logger = LoggerFactory.getLogger(WarcValidationApplication.class);
 
     /**
+     * Will in each loop look for any valid .warc files to copy to second location for further processing.
      *
+     * Application will look for .xml reports with the same name as the .warc file it's currently processing.
+     * If the report doesn't exist, the jhove application (open preservation foundation) will generate a new one.
      *
+     * If the report does exist then the 'status' field of the .xml file will be checked.
+     * If status = Well formed and valid, then the .warc file is moved to the /validwarcs directory.
+     *
+     * After all .warc files in directory is checked, the thread will sleep for a given amount of time.
      *
      * @param args Seconds to sleep between loops
      * @throws Exception
@@ -29,8 +36,6 @@ public class WarcValidationApplication {
 
         AppConfig appConfig = run.getBean(AppConfig.class);
 
-
-        System.out.println("Current folder is: " + new File(".").getAbsolutePath());
         try {
 
             if (args.length != 1) {
