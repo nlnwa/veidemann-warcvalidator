@@ -14,6 +14,7 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
@@ -25,11 +26,11 @@ public class DemoApplicationTests {
 	@Test
 	public void testWarc() throws JhoveException, ParserConfigurationException, IOException, SAXException, XPathExpressionException {
 
-		URL resource = getClass().getClassLoader().getResource("IAH-20080430204825-00000-blackbook.warc.gz");
+		File warc = new File("src/Testfiles/warcs/IAH-20080430204825-00000-blackbook.warc.gz");
 
 		String xmlOutFile = "/tmp/warcfile/outfile.xml";
 
-		JhoveWarcFileValidator validator = new JhoveWarcFileValidator(resource.getFile(), xmlOutFile);
+		JhoveWarcFileValidator validator = new JhoveWarcFileValidator(warc.getAbsolutePath(), xmlOutFile);
 
 		boolean success = true;
 		try {
@@ -58,11 +59,11 @@ public class DemoApplicationTests {
 	@Test
 	public void testWarcThatFails() throws JhoveException, ParserConfigurationException, IOException, SAXException, XPathExpressionException {
 
-		URL resource = getClass().getClassLoader().getResource("test.warc.gz");
+		File warc = new File("src/Testfiles/warcs/cli_dump_small.warc.gz");
 
 		String xmlOutFile = "/tmp/warcfile/failing_warc_outfile.xml";
 
-		JhoveWarcFileValidator validator = new JhoveWarcFileValidator(resource.getFile(), xmlOutFile);
+		JhoveWarcFileValidator validator = new JhoveWarcFileValidator(warc.getAbsolutePath(), xmlOutFile);
 
 		boolean success = true;
 		try {

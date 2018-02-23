@@ -27,12 +27,12 @@ public class WarcValidationApplication {
             sleepBetweenChecks = Integer.parseInt(args[0]);
 
             // Prod
-            // File contentDirectory = new File("/warcs");
-            // String validWarcDirectory = "/validwarcs";
+             File contentDirectory = new File("/warcs");
+             String validWarcDirectory = "/validwarcs";
 
             // Dev test
-            File contentDirectory = new File("src/Testfiles/warcs");
-            String validWarcDirectory = "src/Testfiles/validwarcs";
+            //File contentDirectory = new File("src/Testfiles/warcs");
+            //String validWarcDirectory = "src/Testfiles/validwarcs";
             String reportName;
             File[] files = contentDirectory.listFiles();
 
