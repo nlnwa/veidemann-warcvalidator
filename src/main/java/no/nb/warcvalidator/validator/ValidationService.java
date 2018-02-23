@@ -1,5 +1,6 @@
 package no.nb.warcvalidator.validator;
 
+import no.nb.warcvalidator.config.AppConfig;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
@@ -16,7 +17,10 @@ import java.util.ArrayList;
 
 public class ValidationService {
 
-    public ValidationService() {
+
+    private AppConfig appConfig;
+    public ValidationService(AppConfig config) {
+        this.appConfig = config;
     }
 
     public boolean warcMovedToValid(String directory, String warc) {
@@ -113,7 +117,7 @@ public class ValidationService {
     }
 
     public void validateWarc(String warcFilePath, String reportName) {
-        JhoveWarcFileValidator validator = new JhoveWarcFileValidator(warcFilePath, reportName);
+        JhoveWarcFileValidator validator = new JhoveWarcFileValidator(warcFilePath, reportName, appConfig);
         try {
             validator.validateFile();
         } catch (Exception e) {

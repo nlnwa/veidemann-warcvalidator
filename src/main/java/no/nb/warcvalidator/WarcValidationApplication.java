@@ -1,9 +1,12 @@
 package no.nb.warcvalidator;
 
+import no.nb.warcvalidator.config.AppConfig;
 import no.nb.warcvalidator.validator.ValidationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -13,35 +16,44 @@ public class WarcValidationApplication {
 
     private static final Logger logger = LoggerFactory.getLogger(WarcValidationApplication.class);
 
+    /**
+     *
+     *
+     *
+     * @param args Seconds to sleep between loops
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
 
-        int sleepBetweenChecks;
+        ConfigurableApplicationContext run = SpringApplication.run(WarcValidationApplication.class, args);
 
+        AppConfig appConfig = run.getBean(AppConfig.class);
+
+
+        System.out.println("Current folder is: " + new File(".").getAbsolutePath());
         try {
+
             if (args.length != 1) {
                 System.out.println("Application must have one input parameter");
                 System.out.println("\t <Time to sleep between checks (seconds)");
                 return;
             }
 
-            sleepBetweenChecks = Integer.parseInt(args[0]);
+            int sleepBetweenChecks = Integer.parseInt(args[0]);
 
-            // Prod
-             File contentDirectory = new File("/warcs");
-             String validWarcDirectory = "/validwarcs";
+            File contentDirectory = new File(appConfig.getWarcsLocation());
+            String validWarcDirectory = appConfig.getValidWarcsLocation();
 
-            // Dev test
-            //File contentDirectory = new File("src/Testfiles/warcs");
-            //String validWarcDirectory = "src/Testfiles/validwarcs";
             String reportName;
+            System.out.println("Listing files for folder: " + contentDirectory);
             File[] files = contentDirectory.listFiles();
 
-            ValidationService service = new ValidationService();
+            ValidationService service = new ValidationService(appConfig);
 
             // Filområde for warc (contentWriter) er ikke tomt
             while (true) {
 
-                if(files.length > 0) {
+                if (files != null && files.length > 0) {
                     logger.info("Will validate and move WARC files");
                     ArrayList<File> warcs = service.findAllWarcs(files);
                     ArrayList<File> reports = service.findAllReports(files);
@@ -78,10 +90,9 @@ public class WarcValidationApplication {
                                 files = contentDirectory.listFiles();
                                 reports = service.findAllReports(files);
                             }
-
                         }
                     }
-                }else{
+                } else {
                     logger.info("No files in directory to check.");
                 }
                 try {

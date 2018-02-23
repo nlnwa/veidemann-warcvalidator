@@ -1,0 +1,14 @@
+---
+spring:
+  profiles: test
+
+warcs: src/Testfiles/warcs
+validwarcs: src/Testfiles/validwarcs/
+configFileFullPath: src/main/resources/jhoveconfig/jhove.conf
+---
+spring:
+  profiles: prod
+
+warcs: /warcs
+validwarcs: /validwarcs
+configFileFullPath: /jhove.conf
