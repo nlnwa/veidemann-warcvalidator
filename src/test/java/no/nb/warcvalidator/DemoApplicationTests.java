@@ -30,7 +30,7 @@ public class DemoApplicationTests {
 	@Ignore
 	public void testWarc() throws JhoveException, ParserConfigurationException, IOException, SAXException, XPathExpressionException {
 
-		File warc = new File("src/Testfiles/warcs/IAH-20080430204825-00000-blackbook.warc.gz");
+		File warc = new File("src/test/resources/iah_valid_dump.warc.gz");
 
 		String xmlOutFile = "/tmp/warcfile/outfile.xml";
 
@@ -64,7 +64,7 @@ public class DemoApplicationTests {
 	@Ignore
 	public void testWarcThatFails() throws JhoveException, ParserConfigurationException, IOException, SAXException, XPathExpressionException {
 
-		File warc = new File("src/Testfiles/warcs/cli_dump_small.warc.gz");
+		File warc = new File("src/test/resources/iah_valid_dump.warc.gz");
 
 		String xmlOutFile = "/tmp/warcfile/failing_warc_outfile.xml";
 

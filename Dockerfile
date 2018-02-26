@@ -1,4 +1,4 @@
-FROM openjdk:8
+FROM openjdk:8-jdk-alpine
 
 LABEL maintainer="nettarkivet@nb.no"
 
