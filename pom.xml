@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>no.nb.warcvalidator.veidemann</groupId>
-    <artifactId>veidemann-warc-validator</artifactId>
+    <artifactId>warc-validator</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
