@@ -91,6 +91,7 @@ public class DemoApplicationTests {
 		}
 
 		assertTrue(success);
+		System.out.println("test");
 
 	}
 
