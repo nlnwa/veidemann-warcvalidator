@@ -147,10 +147,11 @@
                                             <targetDir>/veidemann</targetDir>
 
                                             <inline>
-                                                <includeBaseDirectory>true</includeBaseDirectory>
+                                                <includeBaseDirectory>false</includeBaseDirectory>
                                                 <fileSets>
                                                     <fileSet>
                                                         <directory>target</directory>
+                                                        <outputDirectory>/</outputDirectory>
                                                         <includes>
                                                             <include>veidemann-warc-validator-1.0.0-SNAPSHOT.jar</include>
                                                         </includes>
