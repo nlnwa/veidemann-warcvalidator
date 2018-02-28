@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>no.nb.warcvalidator.veidemann</groupId>
-    <artifactId>warc-validator</artifactId>
+    <artifactId>veidemann-warc-validator</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
@@ -139,7 +139,7 @@
                                                 <arg>-XX:+UnlockExperimentalVMOptions</arg>
                                                 <arg>-XX:+UseCGroupMemoryLimitForHeap</arg>
                                                 <arg>-jar</arg>
-                                                <arg>veidemann/warc-validator-1.0.0-SNAPSHOT.jar</arg>
+                                                <arg>veidemann/veidemann-warc-validator-1.0.0-SNAPSHOT.jar</arg>
                                                 <arg>5</arg>
                                             </exec>
                                         </cmd>
@@ -152,7 +152,7 @@
                                                     <fileSet>
                                                         <directory>target</directory>
                                                         <includes>
-                                                            <include>warc-validator-1.0.0-SNAPSHOT.jar</include>
+                                                            <include>veidemann-warc-validator-1.0.0-SNAPSHOT.jar</include>
                                                         </includes>
                                                     </fileSet>
                                                 </fileSets>
