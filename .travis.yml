@@ -15,8 +15,8 @@ env:
   - secure: 2YxjXvPXD4APycLAT5OUne6V4UfTfzxEeyMLMiIrUB0U6fYTd6dCh/c2slGZciqUssDaeW8eYFcwhZQx9A/4JliZHYeD9bhKqw4NuZWisN4cyKJN/DEqnicfIy7tVc37lKcik27rZUm/pWiOzlxH73dnoUi8rp9X8yWIoGRNjBh1Uh5SEJgqY6zy4r68e1MF0410R3fpkVP9KMsAUuoaNtRqsCXEA/rTha8alRKZAJZohbZXwkY2Pcc4pFyccS/Ae0IK6IBOoYo2DZWy7IDOFLEkfTsRZBveuj8FguD6X74AcAAQYr58HF2wDowTSaj6ZdbGRfV36kBWJAiAoH1AwiI+72LNslPgpMu74Rl4iwU7+yHjAynVBaGZxhJ2SLO0/NSqZNG8tWaCqBvMqfEWc/4UkEiNSRcnxmeECPcnPHm9CV5k48iMkKmklLUEz2riXEv47SGD+ulq4V7FeJQkQL0oflXWGyeZrPCS+Ng1X5ABbtgDT/7CELzCMtQcKwzLevU961uKtw+teRUFY4uy2vJbo+Sum51meXzvE5gURCbzeD5BHb/jZ1V/KS9SsHb3/OFTw+MVmeB0S/Ku+7eeZNXM8k6QJkqfQniEKLdWI+81ObCi6rd96LikSXvN0tjDnn0Y101TRQRONfD5+IdIIqTBmRs8YcCzS7FcxNjyq+U=
 
 before_install:
-  - chmod +x build_script.sh
-  - chmod +x push_script.sh
+  - chmod +x .travis/build_script.sh
+  - chmod +x .travis/push_script.sh
 
 script: .travis/build_script.sh
 
