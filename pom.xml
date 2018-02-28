@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>no.nb.warcvalidator.veidemann</groupId>
-    <artifactId>warc-validator</artifactId>
+    <artifactId>veidemann-warc-validator</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
@@ -156,15 +156,6 @@
                                                         </includes>
                                                     </fileSet>
                                                 </fileSets>
-                                                <!--
-                                                <files>
-                                                    <file>
-                                                        <source>../LICENSE</source>
-                                                        <outputDirectory></outputDirectory>
-                                                        <fileMode>0644</fileMode>
-                                                    </file>
-                                                </files>
-                                                -->
                                             </inline>
                                         </assembly>
                                     </build>
