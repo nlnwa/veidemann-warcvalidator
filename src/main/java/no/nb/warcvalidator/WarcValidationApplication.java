@@ -51,6 +51,7 @@ public class WarcValidationApplication {
 
             String reportName;
             System.out.println("Listing files for folder: " + contentDirectory);
+            System.out.println("Moving files to folder: " + validWarcDirectory);
             File[] files = contentDirectory.listFiles();
 
             ValidationService service = new ValidationService(appConfig);
