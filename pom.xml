@@ -1,70 +1,184 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<groupId>no.nb.warcvalidator.veidemann</groupId>
-	<artifactId>warc-validator</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<packaging>jar</packaging>
+    <groupId>no.nb.warcvalidator.veidemann</groupId>
+    <artifactId>warc-validator</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
 
-	<name>WarcValidator</name>
-	<description>Validation of WARC files using Jhove</description>
+    <organization>
+        <name>National Library of Norway</name>
+        <url>http://nb.no</url>
+    </organization>
 
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.5.10.RELEASE</version>
-		<relativePath/> <!-- lookup parent from repository -->
-	</parent>
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>1.8</java.version>
-		<jhove.version>1.18.1</jhove.version>
-	</properties>
+    <name>WarcValidator</name>
+    <description>Validation of WARC files using Jhove</description>
 
-	<dependencies>
-		<dependency>
-			<groupId>com.fasterxml.jackson.dataformat</groupId>
-			<artifactId>jackson-dataformat-xml</artifactId>
-			<version>${jackson.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter</artifactId>
-		</dependency>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>1.5.10.RELEASE</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <docker.tag>latest</docker.tag>
 
-		<dependency>
-			<groupId>org.openpreservation.jhove</groupId>
-			<artifactId>jhove-core</artifactId>
-			<version>${jhove.version}</version>
-		</dependency>
+        <java.version>1.8</java.version>
+        <docker.java.image>openjdk:8u151-jdk-alpine</docker.java.image>
 
+        <jhove.version>1.18.1</jhove.version>
+    </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
 
-		<dependency>
-			<groupId>org.openpreservation.jhove</groupId>
-			<artifactId>jhove-ext-modules</artifactId>
-			<version>${jhove.version}</version>
-		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
-		</plugins>
-	</build>
+        <dependency>
+            <groupId>org.openpreservation.jhove</groupId>
+            <artifactId>jhove-core</artifactId>
+            <version>${jhove.version}</version>
+        </dependency>
 
 
+        <dependency>
+            <groupId>org.openpreservation.jhove</groupId>
+            <artifactId>jhove-ext-modules</artifactId>
+            <version>${jhove.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.23.0</version>
+            </plugin>
+            <!-- Make version number available for application -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplentationEntries>true</addDefaultImplentationEntries>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>docker-build</id>
+            <build>
+                <plugins>
+                    <!-- Build Docker image -->
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>docker.build</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <images>
+                                <image>
+                                    <name>norsknettarkiv/${project.artifactId}</name>
+                                    <alias>${project.artifactId}</alias>
+                                    <build>
+                                        <from>${docker.java.image}</from>
+                                        <maintainer>National Library of Norway</maintainer>
+                                        <tags>
+                                            <tag>${docker.tag}</tag>
+                                        </tags>
+                                        <optimise>true</optimise>
+                                        <runCmds>
+                                            <run>mkdir /validwarcs</run>
+                                        </runCmds>
+                                        <volumes>
+                                            <volume>/warcs</volume>
+                                            <volume>/validwarcs</volume>
+                                        </volumes>
+                                        <cmd>
+                                            <exec>
+                                                <arg>java</arg>
+                                                <arg>-Dspring.profiles.active=prod</arg>
+                                                <arg>-XX:+UnlockExperimentalVMOptions</arg>
+                                                <arg>-XX:+UseCGroupMemoryLimitForHeap</arg>
+                                                <arg>-jar</arg>
+                                                <arg>veidemann/warc-validator-0.0.1-SNAPSHOT.jar</arg>
+                                                <arg>5</arg>
+                                            </exec>
+                                        </cmd>
+                                        <assembly>
+                                            <targetDir>/veidemann</targetDir>
+
+                                            <inline>
+                                                <includeBaseDirectory>true</includeBaseDirectory>
+                                                <fileSets>
+                                                    <fileSet>
+                                                        <directory>target</directory>
+                                                        <includes>
+                                                            <include>${project.artifactId}</include>
+                                                        </includes>
+                                                    </fileSet>
+                                                </fileSets>
+                                                <files>
+                                                    <file>
+                                                        <source>../LICENSE</source>
+                                                        <outputDirectory></outputDirectory>
+                                                        <fileMode>0644</fileMode>
+                                                    </file>
+                                                </files>
+                                            </inline>
+                                        </assembly>
+                                    </build>
+                                </image>
+                            </images>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
