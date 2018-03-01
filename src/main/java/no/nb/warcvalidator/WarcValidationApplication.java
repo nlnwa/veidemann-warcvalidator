@@ -27,7 +27,7 @@ public class WarcValidationApplication {
      * <p>
      * After all .warc files in directory is checked, the thread will sleep for a given amount of time.
      *
-     * @param args Seconds to sleep between loops
+     * @param args Seconds to sleep between loops. Can be set in pom.xml under docker build.
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
@@ -50,9 +50,6 @@ public class WarcValidationApplication {
             String validWarcDirectory = appConfig.getValidWarcsLocation();
 
             String reportName;
-            logger.info("Listing files for folder: " + contentDirectory);
-            logger.info("Moving files to folder: " + validWarcDirectory);
-            logger.info("Config filen: " + appConfig.getJhoveConfigFilePath());
             File[] files = contentDirectory.listFiles();
 
             ValidationService service = new ValidationService(appConfig);
@@ -61,7 +58,9 @@ public class WarcValidationApplication {
             while (true) {
 
                 if (files != null && files.length > 0) {
-                    logger.info("Will validate and move WARC files");
+                    logger.info("Will validate and move WARC files from directory: " +contentDirectory);
+                    logger.info("Using Jhove config: " + appConfig.getJhoveConfigFilePath());
+                    logger.info("And moving valid warcs to: " +validWarcDirectory);
                     ArrayList<File> warcs = service.findAllWarcs(files);
                     ArrayList<File> reports = service.findAllReports(files);
 

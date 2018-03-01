@@ -62,6 +62,7 @@ public class ValidationService {
 
     /**
      * Copies a valid warc to another directory
+     *
      * @param source
      * @param destination
      * @throws IOException
@@ -108,9 +109,10 @@ public class ValidationService {
 
     /**
      * Used to define if a file is a ready .warc file
-     *
+     * <p>
      * A file is considered a warc if the file ends with .warc or .warc.gz,
      * and ready if does not end with open.warc or open.warc.gz
+     *
      * @param warc
      * @return
      */
@@ -132,7 +134,7 @@ public class ValidationService {
 
     /**
      * Used to find warc validation reports in a directory
-     *
+     * <p>
      * A file is considered a report if it ends with .warc.xml or warc.gz.xml
      *
      * @param FileDirectory
@@ -150,6 +152,7 @@ public class ValidationService {
 
     /**
      * Search through list of reports to find a report that matches the name of a warc file.
+     *
      * @param warcReports
      * @param warcFileName
      * @return

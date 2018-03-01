@@ -146,7 +146,6 @@
                                         </cmd>
                                         <assembly>
                                             <targetDir>/</targetDir>
-
                                             <inline>
                                                 <includeBaseDirectory>false</includeBaseDirectory>
                                                 <fileSets>
@@ -168,7 +167,8 @@
                                                         <directory>target</directory>
                                                         <outputDirectory>/veidemann</outputDirectory>
                                                         <includes>
-                                                            <include>veidemann-warc-validator-1.0.0-SNAPSHOT.jar</include>
+                                                            <include>veidemann-warc-validator-1.0.0-SNAPSHOT.jar
+                                                            </include>
                                                         </includes>
                                                     </fileSet>
                                                 </fileSets>
