@@ -125,6 +125,7 @@
                                             <tag>${docker.tag}</tag>
                                         </tags>
                                         <optimise>true</optimise>
+
                                         <runCmds>
                                             <run>mkdir /validwarcs</run>
                                         </runCmds>
@@ -139,19 +140,33 @@
                                                 <arg>-XX:+UnlockExperimentalVMOptions</arg>
                                                 <arg>-XX:+UseCGroupMemoryLimitForHeap</arg>
                                                 <arg>-jar</arg>
-                                                <arg>veidemann/veidemann-warc-validator-1.0.0-SNAPSHOT.jar</arg>
+                                                <arg>/veidemann/veidemann-warc-validator-1.0.0-SNAPSHOT.jar</arg>
                                                 <arg>5</arg>
                                             </exec>
                                         </cmd>
                                         <assembly>
-                                            <targetDir>/veidemann</targetDir>
+                                            <targetDir>/</targetDir>
 
                                             <inline>
                                                 <includeBaseDirectory>false</includeBaseDirectory>
                                                 <fileSets>
                                                     <fileSet>
+                                                        <directory>src/main/resources/jhoveconfig</directory>
+                                                        <outputDirectory>/jhoveconfig</outputDirectory>
+                                                        <includes>
+                                                            <include>jhove.conf</include>
+                                                        </includes>
+                                                    </fileSet>
+                                                    <fileSet>
+                                                        <directory>src/main/resources</directory>
+                                                        <outputDirectory>/veidemann</outputDirectory>
+                                                        <includes>
+                                                            <include>application.yml</include>
+                                                        </includes>
+                                                    </fileSet>
+                                                    <fileSet>
                                                         <directory>target</directory>
-                                                        <outputDirectory>/</outputDirectory>
+                                                        <outputDirectory>/veidemann</outputDirectory>
                                                         <includes>
                                                             <include>veidemann-warc-validator-1.0.0-SNAPSHOT.jar</include>
                                                         </includes>
