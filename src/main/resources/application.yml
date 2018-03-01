@@ -10,5 +10,5 @@ spring:
   profiles: prod
 
 warcs: /warcs
-validwarcs: /validwarcs
+validwarcs: /validwarcs/
 configFileFullPath: /jhove.conf
