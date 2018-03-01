@@ -11,4 +11,4 @@ spring:
 
 warcs: /warcs
 validwarcs: /validwarcs/
-configFileFullPath: /jhove.conf
+configFileFullPath: /jhoveconfig/jhove.conf

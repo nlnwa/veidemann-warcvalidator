@@ -18,13 +18,13 @@ public class WarcValidationApplication {
 
     /**
      * Will in each loop look for any valid .warc files to copy to second location for further processing.
-     *
+     * <p>
      * Application will look for .xml reports with the same name as the .warc file it's currently processing.
      * If the report doesn't exist, the jhove application (open preservation foundation) will generate a new one.
-     *
+     * <p>
      * If the report does exist then the 'status' field of the .xml file will be checked.
      * If status = Well formed and valid, then the .warc file is moved to the /validwarcs directory.
-     *
+     * <p>
      * After all .warc files in directory is checked, the thread will sleep for a given amount of time.
      *
      * @param args Seconds to sleep between loops
@@ -50,9 +50,9 @@ public class WarcValidationApplication {
             String validWarcDirectory = appConfig.getValidWarcsLocation();
 
             String reportName;
-            System.out.println("Listing files for folder: " + contentDirectory);
-            System.out.println("Moving files to folder: " + validWarcDirectory);
-            System.out.println("Config filen: " +appConfig.getJhoveConfigFilePath());
+            logger.info("Listing files for folder: " + contentDirectory);
+            logger.info("Moving files to folder: " + validWarcDirectory);
+            logger.info("Config filen: " + appConfig.getJhoveConfigFilePath());
             File[] files = contentDirectory.listFiles();
 
             ValidationService service = new ValidationService(appConfig);
