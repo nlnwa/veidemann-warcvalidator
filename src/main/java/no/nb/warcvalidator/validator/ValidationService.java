@@ -1,6 +1,7 @@
 package no.nb.warcvalidator.validator;
 
 import no.nb.warcvalidator.config.AppConfig;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
@@ -25,8 +26,22 @@ public class ValidationService {
     }
 
     public boolean warcMovedToValid(String directory, String warc) {
-        boolean check = new File(directory, warc).exists();
-        return check;
+        // boolean check = new File(directory, warc).exists();
+        // return check;
+
+        String folder = directory;
+        File[] listFiles = new File(folder).listFiles();
+
+        for (int i = 0; i < listFiles.length; i++) {
+            if (listFiles[i].isFile()) {
+                String fileName = listFiles[i].getName();
+                String[] parts = fileName.split("_md5_");
+                if (warc.contains(parts[0])) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -59,6 +74,29 @@ public class ValidationService {
         }
         return false;
     }
+
+    /**
+     * Generates md5sum for warcfile and includes it in filename
+     * @param warcfile
+     * @return
+     * @throws FileNotFoundException
+     */
+    public String generateMd5(File warcfile) throws FileNotFoundException {
+        FileInputStream fis = new FileInputStream(warcfile);
+        String filename = warcfile.getName();
+        String[] parts = filename.split("(?=.warc)");
+        String name = parts[0];
+        String ending = parts[1];
+        try {
+            String md5 = DigestUtils.md5Hex(fis);
+            fis.close();
+            return name + "_md5_" + md5 + ending;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
 
     /**
      * Copies a valid warc to another directory

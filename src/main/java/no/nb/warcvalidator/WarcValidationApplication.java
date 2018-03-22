@@ -82,8 +82,11 @@ public class WarcValidationApplication {
                                 if (service.warcStatusIsValidAndWellFormed(validationReport)) {
                                     logger.info(warcFilename +
                                             " , status: Well-formed and valid. Moving WARC to final directory");
+                                    // Generer filnavn med md5 checksum
+                                    String warcMd5 = service.generateMd5(warc);
+
                                     service.copyWarcToValidWarcsFolder(warc,
-                                            new File(validWarcDirectory + warcFilename));
+                                            new File(validWarcDirectory + warcMd5));
                                 } else {
                                     logger.info("WARC: " + warcFilename + " contains errors, will not be moved");
                                 }
