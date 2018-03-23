@@ -31,6 +31,13 @@ public class ValidationService {
         this.appConfig = config;
     }
 
+    /**
+     * Checks for
+     * @param directory
+     * @param warc
+     * @return
+     */
+
     public boolean warcMovedToValid(String directory, String warc) {
 
         String folder = directory;
@@ -124,8 +131,14 @@ public class ValidationService {
         }
     }
 
+    /**
+     * Set file permissions on warcs
+     * Used after a valid warc is moved to /validwarcs directory
+     * @param file
+     * @throws IOException
+     */
     public void setGroupOnFile(File file) throws IOException {
-        String groupid = "1000";
+        String groupid = "10009";
         Path path = file.toPath();
         Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-rw-r--");
 
@@ -139,7 +152,6 @@ public class ValidationService {
 
         // Change group attribute
         Files.getFileAttributeView(path,PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).setGroup(group);
-        //Files.setAttribute(path, "posix:group", group, LinkOption.NOFOLLOW_LINKS);
     }
 
     /**

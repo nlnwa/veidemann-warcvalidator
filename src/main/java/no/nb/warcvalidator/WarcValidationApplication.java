@@ -52,46 +52,49 @@ public class WarcValidationApplication {
 
         ValidationService service = new ValidationService(appConfig);
 
-        // Filområde for warc (contentWriter) er ikke tomt
+        // Check if warcs folder is empty
         while (true) {
 
             if (files != null && files.length > 0) {
                 logger.info("Will validate and move WARC files from directory: " + contentDirectory);
-                logger.info("Using Jhove config: " + appConfig.getJhoveConfigFilePath());
-                logger.info("And moving valid warcs to: " + validWarcDirectory);
+                logger.trace("Using Jhove config: " + appConfig.getJhoveConfigFilePath());
+                logger.info("And move valid warcs to: " + validWarcDirectory);
                 ArrayList<File> warcs = service.findAllWarcs(files);
                 ArrayList<File> reports = service.findAllReports(files);
 
-                // ser gjennom alle  warc-filer
+                // For each .warc in directory
                 for (File warc : warcs) {
                     String warcFilename = warc.getName();
                     String warcFilePath = warc.getAbsolutePath();
 
-                    // Sjekker om warc-fil allerede ligger i valid katalog
+                    // Check if .warc already exists in /validwarcs
                     if (service.warcMovedToValid(validWarcDirectory, warcFilename)) {
                         logger.info(warcFilename + " already validated and moved to final directory");
                     } else {
 
-                        // Sjekker om warc-fil har en rapport
+                        // if not, check if jhove validation report with same name exists
                         File validationReport = service.reportForWarcExist(reports, warcFilename);
                         if (validationReport != null) {
 
-                            // har rapport fra før, sjekker status i rapport
+                            // jhove report exists. Check validation status.
                             if (service.warcStatusIsValidAndWellFormed(validationReport)) {
                                 logger.info(warcFilename +
                                         " , status: Well-formed and valid. Moving WARC to final directory");
-                                // Generer filnavn med md5 checksum
+                                // Report status is well formed and valid. Generate md5sum for file.
                                 String md5Checksum = service.generateMd5(warc);
 
                                 File md5Warc = new File(validWarcDirectory + md5Checksum);
 
+                                // Copy .warc file to /validwarcs with a filename including the md5sum
                                 service.copyWarcToValidWarcsFolder(warc, md5Warc);
 
+                                // Set file permissions
                                 service.setGroupOnFile(md5Warc);
                             } else {
-                                logger.info("WARC: " + warcFilename + " contains errors, will not be moved");
+                                // Jhove report not valid
+                                logger.debug("WARC: " + warcFilename + " contains errors, will not be moved");
                             }
-
+                        // Jhove report for .warc file doesn't exist. Generate one using Jhove.
                         } else {
                             logger.info("Can't find a validation report for: " + warcFilename);
                             reportName = warcFilePath + ".xml";
@@ -102,11 +105,13 @@ public class WarcValidationApplication {
                         }
                     }
                 }
+                // /warcs directory is empty
             } else {
-                logger.info("No files in directory to check.");
+                logger.debug("No files in directory to check.");
             }
+            // set sleep time before next check
             try {
-                logger.info("Thread will sleep for: " + sleepBetweenChecks + " seconds");
+                logger.trace("Thread will sleep for: " + sleepBetweenChecks + " seconds");
                 int sleepTime = sleepBetweenChecks * 1000;
                 Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
