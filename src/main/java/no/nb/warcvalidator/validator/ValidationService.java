@@ -14,7 +14,13 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.attribute.*;
 import java.util.ArrayList;
+import java.util.Set;
 
 public class ValidationService {
 
@@ -26,8 +32,6 @@ public class ValidationService {
     }
 
     public boolean warcMovedToValid(String directory, String warc) {
-        // boolean check = new File(directory, warc).exists();
-        // return check;
 
         String folder = directory;
         File[] listFiles = new File(folder).listFiles();
@@ -77,6 +81,7 @@ public class ValidationService {
 
     /**
      * Generates md5sum for warcfile and includes it in filename
+     *
      * @param warcfile
      * @return
      * @throws FileNotFoundException
@@ -107,23 +112,34 @@ public class ValidationService {
      */
 
     public void copyWarcToValidWarcsFolder(File source, File destination) throws IOException {
-        InputStream is = null;
-        OutputStream os = null;
-
-        try {
-            is = new FileInputStream(source);
-            os = new FileOutputStream(destination);
-
+        try (
+                InputStream is = new FileInputStream(source);
+                OutputStream os = new FileOutputStream(destination);
+        ) {
             byte[] buffer = new byte[1024];
             int length;
             while ((length = is.read(buffer)) > 0) {
                 os.write(buffer, 0, length);
             }
-
-        } finally {
-            is.close();
-            os.close();
         }
+    }
+
+    public void setGroupOnFile(File file) throws IOException {
+        String groupid = "1000";
+        Path path = file.toPath();
+        Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-rw-r--");
+
+        // Set permissioin
+        Files.setPosixFilePermissions(path, perms);
+
+        // Get group principal
+        UserPrincipalLookupService lookupService = FileSystems.getDefault().getUserPrincipalLookupService();
+
+        GroupPrincipal group = lookupService.lookupPrincipalByGroupName(groupid);
+
+        // Change group attribute
+        Files.getFileAttributeView(path,PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).setGroup(group);
+        //Files.setAttribute(path, "posix:group", group, LinkOption.NOFOLLOW_LINKS);
     }
 
     /**
@@ -134,8 +150,6 @@ public class ValidationService {
      */
 
     public ArrayList<File> findAllWarcs(File[] FileDirectory) {
-
-
         ArrayList<File> warcFiles = new ArrayList<>();
         for (File file : FileDirectory) {
             if (warcIsReady(file)) {
