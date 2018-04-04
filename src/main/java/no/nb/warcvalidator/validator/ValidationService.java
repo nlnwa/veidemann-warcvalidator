@@ -1,6 +1,7 @@
 package no.nb.warcvalidator.validator;
 
 import no.nb.warcvalidator.config.AppConfig;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
@@ -13,7 +14,13 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.attribute.*;
 import java.util.ArrayList;
+import java.util.Set;
 
 public class ValidationService {
 
@@ -24,9 +31,28 @@ public class ValidationService {
         this.appConfig = config;
     }
 
+    /**
+     * Checks for
+     * @param directory
+     * @param warc
+     * @return
+     */
+
     public boolean warcMovedToValid(String directory, String warc) {
-        boolean check = new File(directory, warc).exists();
-        return check;
+
+        String folder = directory;
+        File[] listFiles = new File(folder).listFiles();
+
+        for (int i = 0; i < listFiles.length; i++) {
+            if (listFiles[i].isFile()) {
+                String fileName = listFiles[i].getName();
+                String[] parts = fileName.split("_md5_");
+                if (warc.contains(parts[0])) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -61,6 +87,30 @@ public class ValidationService {
     }
 
     /**
+     * Generates md5sum for warcfile and includes it in filename
+     *
+     * @param warcfile
+     * @return
+     * @throws FileNotFoundException
+     */
+    public String generateMd5(File warcfile) throws FileNotFoundException {
+        FileInputStream fis = new FileInputStream(warcfile);
+        String filename = warcfile.getName();
+        String[] parts = filename.split("(?=.warc)");
+        String name = parts[0];
+        String ending = parts[1];
+        try {
+            String md5 = DigestUtils.md5Hex(fis);
+            fis.close();
+            return name + "_md5_" + md5 + ending;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+
+    /**
      * Copies a valid warc to another directory
      *
      * @param source
@@ -69,23 +119,39 @@ public class ValidationService {
      */
 
     public void copyWarcToValidWarcsFolder(File source, File destination) throws IOException {
-        InputStream is = null;
-        OutputStream os = null;
-
-        try {
-            is = new FileInputStream(source);
-            os = new FileOutputStream(destination);
-
+        try (
+                InputStream is = new FileInputStream(source);
+                OutputStream os = new FileOutputStream(destination);
+        ) {
             byte[] buffer = new byte[1024];
             int length;
             while ((length = is.read(buffer)) > 0) {
                 os.write(buffer, 0, length);
             }
-
-        } finally {
-            is.close();
-            os.close();
         }
+    }
+
+    /**
+     * Set file permissions on warcs
+     * Used after a valid warc is moved to /validwarcs directory
+     * @param file
+     * @throws IOException
+     */
+    public void setGroupOnFile(File file) throws IOException {
+        String groupid = "10009";
+        Path path = file.toPath();
+        Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-rw-r--");
+
+        // Set permissioin
+        Files.setPosixFilePermissions(path, perms);
+
+        // Get group principal
+        UserPrincipalLookupService lookupService = FileSystems.getDefault().getUserPrincipalLookupService();
+
+        GroupPrincipal group = lookupService.lookupPrincipalByGroupName(groupid);
+
+        // Change group attribute
+        Files.getFileAttributeView(path,PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).setGroup(group);
     }
 
     /**
@@ -96,8 +162,6 @@ public class ValidationService {
      */
 
     public ArrayList<File> findAllWarcs(File[] FileDirectory) {
-
-
         ArrayList<File> warcFiles = new ArrayList<>();
         for (File file : FileDirectory) {
             if (warcIsReady(file)) {

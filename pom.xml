@@ -73,6 +73,12 @@
             <artifactId>jhove-ext-modules</artifactId>
             <version>${jhove.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.11</version>
+        </dependency>
     </dependencies>
 
     <build>

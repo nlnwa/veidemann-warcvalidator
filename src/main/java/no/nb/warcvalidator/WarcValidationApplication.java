@@ -36,81 +36,87 @@ public class WarcValidationApplication {
 
         AppConfig appConfig = run.getBean(AppConfig.class);
 
-        try {
+        if (args.length != 1) {
+            System.out.println("Application must have one input parameter");
+            System.out.println("\t <Time to sleep between checks (seconds)");
+            return;
+        }
 
-            if (args.length != 1) {
-                System.out.println("Application must have one input parameter");
-                System.out.println("\t <Time to sleep between checks (seconds)");
-                return;
-            }
+        int sleepBetweenChecks = Integer.parseInt(args[0]);
 
-            int sleepBetweenChecks = Integer.parseInt(args[0]);
+        File contentDirectory = new File(appConfig.getWarcsLocation());
+        String validWarcDirectory = appConfig.getValidWarcsLocation();
 
-            File contentDirectory = new File(appConfig.getWarcsLocation());
-            String validWarcDirectory = appConfig.getValidWarcsLocation();
+        String reportName;
+        File[] files = contentDirectory.listFiles();
 
-            String reportName;
-            File[] files = contentDirectory.listFiles();
+        ValidationService service = new ValidationService(appConfig);
 
-            ValidationService service = new ValidationService(appConfig);
+        // Check if warcs folder is empty
+        while (true) {
 
-            // Filområde for warc (contentWriter) er ikke tomt
-            while (true) {
+            if (files != null && files.length > 0) {
+                logger.info("Will validate and move WARC files from directory: " + contentDirectory);
+                logger.trace("Using Jhove config: " + appConfig.getJhoveConfigFilePath());
+                logger.info("And move valid warcs to: " + validWarcDirectory);
+                ArrayList<File> warcs = service.findAllWarcs(files);
+                ArrayList<File> reports = service.findAllReports(files);
 
-                if (files != null && files.length > 0) {
-                    logger.info("Will validate and move WARC files from directory: " +contentDirectory);
-                    logger.info("Using Jhove config: " + appConfig.getJhoveConfigFilePath());
-                    logger.info("And moving valid warcs to: " +validWarcDirectory);
-                    ArrayList<File> warcs = service.findAllWarcs(files);
-                    ArrayList<File> reports = service.findAllReports(files);
+                // For each .warc in directory
+                for (File warc : warcs) {
+                    String warcFilename = warc.getName();
+                    String warcFilePath = warc.getAbsolutePath();
 
-                    // ser gjennom alle  warc-filer
-                    for (File warc : warcs) {
-                        String warcFilename = warc.getName();
-                        String warcFilePath = warc.getAbsolutePath();
+                    // Check if .warc already exists in /validwarcs
+                    if (service.warcMovedToValid(validWarcDirectory, warcFilename)) {
+                        logger.info(warcFilename + " already validated and moved to final directory");
+                    } else {
 
-                        // Sjekker om warc-fil allerede ligger i valid katalog
-                        if (service.warcMovedToValid(validWarcDirectory, warcFilename)) {
-                            logger.info(warcFilename + " already validated and moved to final directory");
-                        } else {
+                        // if not, check if jhove validation report with same name exists
+                        File validationReport = service.reportForWarcExist(reports, warcFilename);
+                        if (validationReport != null) {
 
-                            // Sjekker om warc-fil har en rapport
-                            File validationReport = service.reportForWarcExist(reports, warcFilename);
-                            if (validationReport != null) {
+                            // jhove report exists. Check validation status.
+                            if (service.warcStatusIsValidAndWellFormed(validationReport)) {
+                                logger.info(warcFilename +
+                                        " , status: Well-formed and valid. Moving WARC to final directory");
+                                // Report status is well formed and valid. Generate md5sum for file.
+                                String md5Checksum = service.generateMd5(warc);
 
-                                // har rapport fra før, sjekker status i rapport
-                                if (service.warcStatusIsValidAndWellFormed(validationReport)) {
-                                    logger.info(warcFilename +
-                                            " , status: Well-formed and valid. Moving WARC to final directory");
-                                    service.copyWarcToValidWarcsFolder(warc,
-                                            new File(validWarcDirectory + warcFilename));
-                                } else {
-                                    logger.info("WARC: " + warcFilename + " contains errors, will not be moved");
-                                }
+                                File md5Warc = new File(validWarcDirectory + md5Checksum);
 
+                                // Copy .warc file to /validwarcs with a filename including the md5sum
+                                service.copyWarcToValidWarcsFolder(warc, md5Warc);
+
+                                // Set file permissions
+                                service.setGroupOnFile(md5Warc);
                             } else {
-                                logger.info("Can't find a validation report for: " + warcFilename);
-                                reportName = warcFilePath + ".xml";
-                                logger.info("Will create report using Jhove, with name: " + reportName);
-                                service.validateWarc(warcFilePath, reportName);
-                                files = contentDirectory.listFiles();
-                                reports = service.findAllReports(files);
+                                // Jhove report not valid
+                                logger.debug("WARC: " + warcFilename + " contains errors, will not be moved");
                             }
+                        // Jhove report for .warc file doesn't exist. Generate one using Jhove.
+                        } else {
+                            logger.info("Can't find a validation report for: " + warcFilename);
+                            reportName = warcFilePath + ".xml";
+                            logger.info("Will create report using Jhove, with name: " + reportName);
+                            service.validateWarc(warcFilePath, reportName);
+                            files = contentDirectory.listFiles();
+                            reports = service.findAllReports(files);
                         }
                     }
-                } else {
-                    logger.info("No files in directory to check.");
                 }
-                try {
-                    logger.info("Thread will sleep for: " + sleepBetweenChecks + " seconds");
-                    int sleepTime = sleepBetweenChecks * 1000;
-                    Thread.sleep(sleepTime);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                // /warcs directory is empty
+            } else {
+                logger.debug("No files in directory to check.");
             }
-        } finally {
-
+            // set sleep time before next check
+            try {
+                logger.trace("Thread will sleep for: " + sleepBetweenChecks + " seconds");
+                int sleepTime = sleepBetweenChecks * 1000;
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
