@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>no.nb.warcvalidator.veidemann</groupId>
     <artifactId>veidemann-warc-validator</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <organization>
@@ -22,43 +23,56 @@
     </licenses>
 
     <name>WarcValidator</name>
-    <description>Validation of WARC files using Jhove</description>
-
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.5.10.RELEASE</version>
-        <relativePath/> <!-- lookup parent from repository -->
-    </parent>
+    <description>Validate WARC files using Jhove</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <docker.tag>latest</docker.tag>
 
-        <java.version>1.8</java.version>
         <docker.java.image>openjdk:8u151-jdk-alpine</docker.java.image>
-
         <jhove.version>1.18.1</jhove.version>
+
+        <log4j.version>2.7</log4j.version>
     </properties>
 
     <dependencies>
+
         <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-xml</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.21</version>
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-jul</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.rethinkdb</groupId>
+            <artifactId>rethinkdb-driver</artifactId>
+            <version>2.3.3</version>
         </dependency>
 
         <dependency>
@@ -66,7 +80,6 @@
             <artifactId>jhove-core</artifactId>
             <version>${jhove.version}</version>
         </dependency>
-
 
         <dependency>
             <groupId>org.openpreservation.jhove</groupId>
@@ -79,24 +92,29 @@
             <artifactId>commons-codec</artifactId>
             <version>1.11</version>
         </dependency>
+
+        <!-- Configuration framework -->
+        <dependency>
+            <groupId>com.typesafe</groupId>
+            <artifactId>config</artifactId>
+            <version>1.3.1</version>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>io.fabric8</groupId>
-                <artifactId>docker-maven-plugin</artifactId>
-                <version>0.23.0</version>
-            </plugin>
             <!-- Make version number available for application -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.0.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                    </archive>
+                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -106,13 +124,47 @@
             <id>docker-build</id>
             <build>
                 <plugins>
-                    <!-- Build Docker image -->
+                    <!-- Create assembly with startup scripts and dependencies -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>appassembler-maven-plugin</artifactId>
+                        <version>2.0.0</version>
+                        <configuration>
+                            <programs>
+                                <program>
+                                    <mainClass>no.nb.nna.veidemann.warcvalidator.Main</mainClass>
+                                    <id>${project.artifactId}</id>
+                                </program>
+                            </programs>
+                            <binFolder>bin</binFolder>
+                            <repositoryName>lib</repositoryName>
+                            <repositoryLayout>flat</repositoryLayout>
+                            <configurationDirectory>config</configurationDirectory>
+                            <endorsedDir>plugins</endorsedDir>
+                            <preAssembleDirectory>src/main/distfiles</preAssembleDirectory>
+                            <extraJvmArguments>-Dconfig.file=${project.basedir}/config/application.conf
+                                -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap
+                            </extraJvmArguments>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>assemble</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Build Docker Image -->
+
                     <plugin>
                         <groupId>io.fabric8</groupId>
                         <artifactId>docker-maven-plugin</artifactId>
+                        <version>0.23.0</version>
                         <executions>
                             <execution>
-                                <id>docker.build</id>
+                                <id>docker-build</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>build</goal>
@@ -131,7 +183,6 @@
                                             <tag>${docker.tag}</tag>
                                         </tags>
                                         <optimise>true</optimise>
-
                                         <runCmds>
                                             <run>mkdir /validwarcs</run>
                                         </runCmds>
@@ -139,45 +190,49 @@
                                             <volume>/warcs</volume>
                                             <volume>/validwarcs</volume>
                                         </volumes>
+                                        <env>
+                                            <WARC_DIR>/warcs</WARC_DIR>
+                                            <VALID_WARC_DIR>/validwarcs</VALID_WARC_DIR>
+                                        </env>
                                         <cmd>
                                             <exec>
-                                                <arg>java</arg>
-                                                <arg>-Dspring.profiles.active=prod</arg>
-                                                <arg>-XX:+UnlockExperimentalVMOptions</arg>
-                                                <arg>-XX:+UseCGroupMemoryLimitForHeap</arg>
-                                                <arg>-jar</arg>
-                                                <arg>/veidemann/veidemann-warc-validator-1.0.0-SNAPSHOT.jar</arg>
-                                                <arg>5</arg>
+                                                <arg>/warcvalidator/bin/${project.artifactId}</arg>
                                             </exec>
                                         </cmd>
                                         <assembly>
-                                            <targetDir>/</targetDir>
+                                            <targetDir>/warcvalidator</targetDir>
                                             <inline>
-                                                <includeBaseDirectory>false</includeBaseDirectory>
+                                                <includeBaseDirectory>true</includeBaseDirectory>
                                                 <fileSets>
                                                     <fileSet>
-                                                        <directory>src/main/resources/jhoveconfig</directory>
-                                                        <outputDirectory>/jhoveconfig</outputDirectory>
+                                                        <directory>target/appassembler/bin</directory>
+                                                        <outputDirectory>bin</outputDirectory>
                                                         <includes>
-                                                            <include>jhove.conf</include>
+                                                            <include>${project.artifactId}</include>
                                                         </includes>
+                                                        <fileMode>0755</fileMode>
                                                     </fileSet>
                                                     <fileSet>
-                                                        <directory>src/main/resources</directory>
-                                                        <outputDirectory>/veidemann</outputDirectory>
-                                                        <includes>
-                                                            <include>application.yml</include>
-                                                        </includes>
+                                                        <directory>target/appassembler/bin</directory>
+                                                        <outputDirectory>bin</outputDirectory>
+                                                        <excludes>${project.artifactId}</excludes>
+                                                        <fileMode>0644</fileMode>
                                                     </fileSet>
                                                     <fileSet>
-                                                        <directory>target</directory>
-                                                        <outputDirectory>/veidemann</outputDirectory>
-                                                        <includes>
-                                                            <include>veidemann-warc-validator-1.0.0-SNAPSHOT.jar
-                                                            </include>
-                                                        </includes>
+                                                        <directory>target/appassembler</directory>
+                                                        <outputDirectory>/</outputDirectory>
+                                                        <excludes>
+                                                            <exclude>bin</exclude>
+                                                        </excludes>
                                                     </fileSet>
                                                 </fileSets>
+                                                <files>
+                                                    <file>
+                                                        <source>LICENSE</source>
+                                                        <outputDirectory></outputDirectory>
+                                                        <fileMode>0644</fileMode>
+                                                    </file>
+                                                </files>
                                             </inline>
                                         </assembly>
                                     </build>

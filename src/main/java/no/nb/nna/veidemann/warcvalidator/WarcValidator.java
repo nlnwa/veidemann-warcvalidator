@@ -1,74 +1,70 @@
-package no.nb.warcvalidator;
+package no.nb.nna.veidemann.warcvalidator;
 
-import no.nb.warcvalidator.config.AppConfig;
-import no.nb.warcvalidator.validator.ValidationService;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigBeanFactory;
+import com.typesafe.config.ConfigFactory;
+import no.nb.nna.veidemann.warcvalidator.repo.RethinkRepository;
+import no.nb.nna.veidemann.warcvalidator.settings.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ConfigurableApplicationContext;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
-@SpringBootApplication
-public class WarcValidationApplication {
+public class WarcValidator {
 
-    private static final Logger logger = LoggerFactory.getLogger(WarcValidationApplication.class);
+    private static final Logger logger = LoggerFactory.getLogger(WarcValidator.class);
+    private static final Settings SETTINGS;
 
-    /**
-     * Will in each loop look for any valid .warc files to copy to second location for further processing.
-     * <p>
-     * Application will look for .xml reports with the same name as the .warc file it's currently processing.
-     * If the report doesn't exist, the jhove application (open preservation foundation) will generate a new one.
-     * <p>
-     * If the report does exist then the 'status' field of the .xml file will be checked.
-     * If status = Well formed and valid, then the .warc file is moved to the /validwarcs directory.
-     * <p>
-     * After all .warc files in directory is checked, the thread will sleep for a given amount of time.
-     *
-     * @param args Seconds to sleep between loops. Can be set in pom.xml under docker build.
-     * @throws Exception
-     */
-    public static void main(String[] args) throws Exception {
+    static {
+        Config config = ConfigFactory.load();
+        config.checkValid(ConfigFactory.defaultReference());
+        SETTINGS = ConfigBeanFactory.create(config, Settings.class);
+    }
 
-        ConfigurableApplicationContext run = SpringApplication.run(WarcValidationApplication.class, args);
+    public WarcValidator() {
+    }
 
-        AppConfig appConfig = run.getBean(AppConfig.class);
+    public WarcValidator start() throws ParserConfigurationException, SAXException, XPathExpressionException, IOException {
 
-        if (args.length != 1) {
-            System.out.println("Application must have one input parameter");
-            System.out.println("\t <Time to sleep between checks (seconds)");
-            return;
+        RethinkRepository db = null;
+        try {
+            db = new RethinkRepository(SETTINGS.getDbHost(), SETTINGS.getDbPort(), SETTINGS.getDbName(),
+                    SETTINGS.getDbUser(), SETTINGS.getDbPassword());
+        } catch (Exception ex) {
+            logger.error("Could not connect to DB");
         }
 
-        int sleepBetweenChecks = Integer.parseInt(args[0]);
+        int sleepBetweenChecks = SETTINGS.getSleepTime();
 
-        File contentDirectory = new File(appConfig.getWarcsLocation());
-        String validWarcDirectory = appConfig.getValidWarcsLocation();
+        File contentDirectory = new File(SETTINGS.getWarcDir());
+        String validWarcsDirectory = SETTINGS.getValidWarcDir();
 
         String reportName;
         File[] files = contentDirectory.listFiles();
 
-        ValidationService service = new ValidationService(appConfig);
+        ValidationService service = new ValidationService(SETTINGS, db);
 
-        // Check if warcs folder is empty
         while (true) {
 
             if (files != null && files.length > 0) {
                 logger.info("Will validate and move WARC files from directory: " + contentDirectory);
-                logger.trace("Using Jhove config: " + appConfig.getJhoveConfigFilePath());
-                logger.info("And move valid warcs to: " + validWarcDirectory);
+                logger.trace("Using Jhove config: " + SETTINGS.getJhoveConfigPath());
+                logger.info("And move valid warcs to: " + validWarcsDirectory);
+
                 ArrayList<File> warcs = service.findAllWarcs(files);
                 ArrayList<File> reports = service.findAllReports(files);
 
-                // For each .warc in directory
                 for (File warc : warcs) {
                     String warcFilename = warc.getName();
                     String warcFilePath = warc.getAbsolutePath();
 
                     // Check if .warc already exists in /validwarcs
-                    if (service.warcMovedToValid(validWarcDirectory, warcFilename)) {
+                    if (service.warcMovedToValid(validWarcsDirectory, warcFilename)) {
                         logger.info(warcFilename + " already validated and moved to final directory");
                     } else {
 
@@ -83,7 +79,7 @@ public class WarcValidationApplication {
                                 // Report status is well formed and valid. Generate md5sum for file.
                                 String md5Checksum = service.generateMd5(warc);
 
-                                File md5Warc = new File(validWarcDirectory + md5Checksum);
+                                File md5Warc = new File(validWarcsDirectory + md5Checksum);
 
                                 // Copy .warc file to /validwarcs with a filename including the md5sum
                                 service.copyWarcToValidWarcsFolder(warc, md5Warc);
@@ -94,7 +90,7 @@ public class WarcValidationApplication {
                                 // Jhove report not valid
                                 logger.debug("WARC: " + warcFilename + " contains errors, will not be moved");
                             }
-                        // Jhove report for .warc file doesn't exist. Generate one using Jhove.
+                            // Jhove report for .warc file doesn't exist. Generate one using Jhove.
                         } else {
                             logger.info("Can't find a validation report for: " + warcFilename);
                             reportName = warcFilePath + ".xml";
@@ -119,4 +115,6 @@ public class WarcValidationApplication {
             }
         }
     }
+
+    public static Settings getSettings() { return SETTINGS; }
 }
