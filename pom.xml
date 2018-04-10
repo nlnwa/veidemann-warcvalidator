@@ -142,7 +142,7 @@
                             <configurationDirectory>config</configurationDirectory>
                             <endorsedDir>plugins</endorsedDir>
                             <preAssembleDirectory>src/main/distfiles</preAssembleDirectory>
-                            <extraJvmArguments>-Dconfig.file=${project.basedir}/config/application.conf
+                            <extraJvmArguments>-Dconfig.file=@BASEDIR@/config/application.conf
                                 -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap
                             </extraJvmArguments>
                         </configuration>
