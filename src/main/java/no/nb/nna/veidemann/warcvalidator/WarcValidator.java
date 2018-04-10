@@ -33,7 +33,7 @@ public class WarcValidator {
 
         RethinkRepository db = null;
         try {
-            db = new RethinkRepository(SETTINGS.getDbHost(), SETTINGS.getDbPort(), SETTINGS.getDbName(),
+            db = new RethinkRepository(SETTINGS.getDbHost(), SETTINGS.getDbPort(),
                     SETTINGS.getDbUser(), SETTINGS.getDbPassword());
         } catch (Exception ex) {
             logger.error("Could not connect to DB");

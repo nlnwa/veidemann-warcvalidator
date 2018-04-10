@@ -11,17 +11,16 @@ public class RethinkRepository implements AutoCloseable {
     private final Logger logger = LoggerFactory.getLogger(RethinkRepository.class);
 
     private static final String VERSION = "V1";
-    private String DATABASE_NAME = "";
+    private String DATABASE_NAME = "reports";
     private final String UNVALID_WARCS_TABLE = "unalid_warcs";
 
     private static final RethinkDB r = RethinkDB.r;
     private Connection connection;
 
 
-    public RethinkRepository(String host, int port, String dbName, String user, String password) {
+    public RethinkRepository(String host, int port, String user, String password) {
 
         logger.info(RethinkRepository.VERSION + ": Starting up RethinkRepository. " + VERSION);
-        this.DATABASE_NAME = dbName;
 
         try {
             connection = r.connection().hostname(host).port(port).user(user, password).connect();
@@ -40,7 +39,7 @@ public class RethinkRepository implements AutoCloseable {
             boolean tableExists = r.db(DATABASE_NAME).tableList().contains(UNVALID_WARCS_TABLE).run(connection);
             if (!tableExists) {
                 logger.info("Table doesn't exist, we try to create it");
-                r.db(DATABASE_NAME).tableCreate(UNVALID_WARCS_TABLE).optArg("primary_key", "file").run(connection);
+                r.db(DATABASE_NAME).tableCreate(UNVALID_WARCS_TABLE).optArg("primary_key", "filename").run(connection);
             }
         } catch (ReqlDriverError error) {
             logger.info("Unable to connect to server: " + host + " on port " + port);
