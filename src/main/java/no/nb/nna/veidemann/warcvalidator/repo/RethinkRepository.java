@@ -12,7 +12,7 @@ public class RethinkRepository implements AutoCloseable {
 
     private static final String VERSION = "V1";
     private String DATABASE_NAME = "report";
-    private final String UNVALID_WARCS_TABLE = "unalid_warcs";
+    private final String UNVALID_WARCS_TABLE = "unvalid_warcs";
 
     private static final RethinkDB r = RethinkDB.r;
     private Connection connection;
