@@ -11,7 +11,7 @@ public class RethinkRepository implements AutoCloseable {
     private final Logger logger = LoggerFactory.getLogger(RethinkRepository.class);
 
     private static final String VERSION = "V1";
-    private String DATABASE_NAME = "reports";
+    private String DATABASE_NAME = "report";
     private final String UNVALID_WARCS_TABLE = "unalid_warcs";
 
     private static final RethinkDB r = RethinkDB.r;
