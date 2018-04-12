@@ -1,19 +1,20 @@
 package no.nb.nna.veidemann.warcvalidator.model;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class WarcError {
 
     private String filename;
     private String status;
-    private HashMap messages;
-    private HashMap nonCompliantWarcId;
+    private ArrayList<HashMap<String, String>> messages;
+    private ArrayList<String> nonCompliantWarcIds;
 
-    public WarcError(String filename, String status, HashMap messages, HashMap nonCompliantWarcId) {
+    public WarcError(String filename, String status, ArrayList<HashMap<String, String>> messages, ArrayList<String> nonCompliantWarcIds) {
         this.filename = filename;
         this.status = status;
         this.messages = messages;
-        this.nonCompliantWarcId = nonCompliantWarcId;
+        this.nonCompliantWarcIds = nonCompliantWarcIds;
     }
 
     public String getFilename() {
@@ -32,20 +33,20 @@ public class WarcError {
         this.status = status;
     }
 
-    public HashMap getMessages() {
+    public ArrayList<HashMap<String, String>> getMessages() {
         return messages;
     }
 
-    public void setMessages(HashMap messages) {
+    public void setMessages(ArrayList<HashMap<String, String>> messages) {
         this.messages = messages;
     }
 
-    public HashMap getNonCompliantWarcId() {
-        return nonCompliantWarcId;
+    public ArrayList<String> getNonCompliantWarcId() {
+        return nonCompliantWarcIds;
     }
 
-    public void setNonCompliantWarcId(HashMap nonCompliantWarcId) {
-        this.nonCompliantWarcId = nonCompliantWarcId;
+    public void setNonCompliantWarcId(ArrayList<String> nonCompliantWarcId) {
+        this.nonCompliantWarcIds = nonCompliantWarcId;
     }
 
 }
