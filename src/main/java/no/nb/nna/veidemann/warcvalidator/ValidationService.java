@@ -132,22 +132,18 @@ public class ValidationService {
             if (statusNode.getTextContent().equalsIgnoreCase(validWarc)) {
                 return true;
             } else {
-                HashMap<String, HashMap<String, String>> messages = new HashMap<>();
+                ArrayList<HashMap<String, String>> messages = new ArrayList();
                 String statusText = statusNode.getTextContent();
-                HashMap message = new HashMap();
-                HashMap nonCompliantId = new HashMap();
-                int numMessages = messageList.getLength();
-                for (int i = 0; i < numMessages; i++) {
-                    Element node = (Element) messageList.item(i);
-                    message.put("message "+ i, getMessageInXml(node));
-                    messages.put("messages ", message);
+                ArrayList<String> nonCompliantIds = new ArrayList();
+
+                for (int i = 0; i < messageList.getLength(); i++) {
+                    messages.add(getMessageInXml((Element) messageList.item(i)));
                 }
-                int numNonComplianId = nodes.getLength();
-                for (int j = 0; j < numNonComplianId; j++) {
-                    nonCompliantId.put("Non Compliant WARC-ID " + j + ":",nodes.item(j).getTextContent());
+                for (int j = 0; j < nodes.getLength(); j++) {
+                    nonCompliantIds.add(nodes.item(j).getTextContent());
                 }
 
-                WarcError error = new WarcError(fileName, statusText, messages, nonCompliantId);
+                WarcError error = new WarcError(fileName, statusText, messages, nonCompliantIds);
                 db.insertFailedWarcInfo(error);
                 return false;
             }
