@@ -79,7 +79,7 @@ public class WarcValidator {
                                 // Report status is well formed and valid. Generate md5sum for file.
                                 String md5Checksum = service.generateMd5(warc);
 
-                                File md5Warc = new File(validWarcsDirectory + md5Checksum);
+                                File md5Warc = new File(validWarcsDirectory, md5Checksum);
 
                                 // Copy .warc file to /validwarcs with a filename including the md5sum
                                 service.copyWarcToValidWarcsFolder(warc, md5Warc);
