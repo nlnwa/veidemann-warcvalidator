@@ -45,11 +45,12 @@ public class WarcValidator {
         String validWarcsDirectory = SETTINGS.getValidWarcDir();
 
         String reportName;
-        File[] files = contentDirectory.listFiles();
 
         ValidationService service = new ValidationService(SETTINGS, db);
 
         while (true) {
+
+            File[] files = contentDirectory.listFiles();
 
             if (files != null && files.length > 0) {
                 logger.info("Will validate and move WARC files from directory: " + contentDirectory);
