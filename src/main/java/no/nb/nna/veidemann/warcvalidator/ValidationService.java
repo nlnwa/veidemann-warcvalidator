@@ -12,11 +12,9 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.*;
 import java.io.*;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.nio.file.attribute.*;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
@@ -29,31 +27,6 @@ public class ValidationService {
     public ValidationService (Settings settings, RethinkRepository rethinkRepository) {
         this.db = rethinkRepository;
         this.SETTINGS = settings;
-    }
-
-    /**
-     * Checks that warc is moved to /validwarcs
-     *
-     * @param directory
-     * @param warc
-     * @return
-     */
-
-    public boolean warcMovedToValid(String directory, String warc) {
-
-        String folder = directory;
-        File[] listFiles = new File(folder).listFiles();
-
-        for (int i = 0; i < listFiles.length; i++) {
-            if (listFiles[i].isFile()) {
-                String fileName = listFiles[i].getName();
-                String[] parts = fileName.split("_md5_");
-                if (warc.contains(parts[0])) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     /**
@@ -81,7 +54,7 @@ public class ValidationService {
 
     /**
      * Helper method that generates a hashmap of a message field in the xml
-     * so that all the attributes for the field is included in the
+     * so that all the attributes for the field is included in the message
      * @param element
      * @return
      */
@@ -130,11 +103,13 @@ public class ValidationService {
         if (statusNode != null) {
             String validWarc = "Well-Formed and valid";
             if (statusNode.getTextContent().equalsIgnoreCase(validWarc)) {
+                db.insertValidWarc(fileName);
                 return true;
             } else {
                 ArrayList<HashMap<String, String>> messages = new ArrayList();
                 String statusText = statusNode.getTextContent();
                 ArrayList<String> nonCompliantIds = new ArrayList();
+                OffsetDateTime timestamp = OffsetDateTime.now();
 
                 for (int i = 0; i < messageList.getLength(); i++) {
                     messages.add(getMessageInXml((Element) messageList.item(i)));
@@ -143,7 +118,7 @@ public class ValidationService {
                     nonCompliantIds.add(nodes.item(j).getTextContent());
                 }
 
-                WarcError error = new WarcError(fileName, statusText, messages, nonCompliantIds);
+                WarcError error = new WarcError(fileName, statusText, messages, nonCompliantIds, timestamp);
                 db.insertFailedWarcInfo(error);
                 return false;
             }
@@ -152,24 +127,45 @@ public class ValidationService {
     }
 
     /**
-     * Copies a valid warc to another directory
+     * Moves warc and xml reports to another directory
      *
      * @param source
-     * @param destination
+     * @param target
+     * @param file
      * @throws IOException
      */
 
-    public void copyWarcToValidWarcsFolder(File source, File destination) throws IOException {
-        try (
-                InputStream is = new FileInputStream(source);
-                OutputStream os = new FileOutputStream(destination);
-        ) {
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = is.read(buffer)) > 0) {
-                os.write(buffer, 0, length);
-            }
-        }
+    public void moveWarcToDirectory(String source,String target, String file) throws IOException {
+        Path sourceDir = Paths.get(source);
+        Path targetDir = Paths.get(target);
+
+        Path sourceWarc = sourceDir.resolve(file);
+        Path targetWarc = targetDir.resolve(file);
+
+        Path sourceXml = sourceDir.resolve(file + ".xml");
+        Path targetXml = targetDir.resolve(file + ".xml");
+
+        Files.move(sourceWarc, targetWarc);
+        Files.move(sourceXml, targetXml);
+    }
+
+
+    /**
+     * Copies a valid warc to valid directory
+     *
+     * @param source
+     * @param target
+     * @throws IOException
+     */
+
+    public void copyToValid (String source, String target, String file, String md5Checksum) throws IOException {
+        Path sourceFile = Paths.get(source).resolve(file);
+        Path targetFile = Paths.get(target).resolve(md5Checksum);
+
+        Files.copy(sourceFile, targetFile);
+
+        setGroupOnFile(targetFile);
+
     }
 
     /**
@@ -179,13 +175,13 @@ public class ValidationService {
      * @param file
      * @throws IOException
      */
-    public void setGroupOnFile(File file) throws IOException {
+    public void setGroupOnFile(Path file) throws IOException { // before file
         String groupid = "10009";
-        Path path = file.toPath();
+       // Path path = file.toPath();
         Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-rw-r--");
 
         // Set permissioin
-        Files.setPosixFilePermissions(path, perms);
+        Files.setPosixFilePermissions(file, perms);
 
         // Get group principal
         UserPrincipalLookupService lookupService = FileSystems.getDefault().getUserPrincipalLookupService();
@@ -193,7 +189,7 @@ public class ValidationService {
         GroupPrincipal group = lookupService.lookupPrincipalByGroupName(groupid);
 
         // Change group attribute !REMOVE when running in debug
-        Files.getFileAttributeView(path,PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).setGroup(group);
+        Files.getFileAttributeView(file,PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).setGroup(group);
     }
 
     /**

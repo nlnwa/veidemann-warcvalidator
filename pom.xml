@@ -183,16 +183,17 @@
                                             <tag>${docker.tag}</tag>
                                         </tags>
                                         <optimise>true</optimise>
-                                        <runCmds>
-                                            <run>mkdir /validwarcs</run>
-                                        </runCmds>
                                         <volumes>
                                             <volume>/warcs</volume>
                                             <volume>/validwarcs</volume>
+                                            <volume>/invalidwarcs</volume>
+                                            <volume>/delivery</volume>
                                         </volumes>
                                         <env>
                                             <WARC_DIR>/warcs</WARC_DIR>
                                             <VALID_WARC_DIR>/validwarcs</VALID_WARC_DIR>
+                                            <INVALID_WARC_DIR>/invalidwarcs</INVALID_WARC_DIR>
+                                            <DELIVERY_WARC_DIR>/delivery</DELIVERY_WARC_DIR>
                                         </env>
                                         <cmd>
                                             <exec>

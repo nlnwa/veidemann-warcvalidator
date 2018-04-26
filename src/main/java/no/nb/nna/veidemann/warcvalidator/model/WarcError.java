@@ -1,5 +1,6 @@
 package no.nb.nna.veidemann.warcvalidator.model;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -9,12 +10,15 @@ public class WarcError {
     private String status;
     private ArrayList<HashMap<String, String>> messages;
     private ArrayList<String> nonCompliantWarcIds;
+    private OffsetDateTime timestamp;
 
-    public WarcError(String filename, String status, ArrayList<HashMap<String, String>> messages, ArrayList<String> nonCompliantWarcIds) {
+    public WarcError(String filename, String status, ArrayList<HashMap<String, String>> messages,
+                     ArrayList<String> nonCompliantWarcIds, OffsetDateTime timestamp) {
         this.filename = filename;
         this.status = status;
         this.messages = messages;
         this.nonCompliantWarcIds = nonCompliantWarcIds;
+        this.timestamp = timestamp;
     }
 
     public String getFilename() {
@@ -49,4 +53,7 @@ public class WarcError {
         this.nonCompliantWarcIds = nonCompliantWarcId;
     }
 
+    public OffsetDateTime getTimestamp() { return timestamp; }
+
+    public void setTimestamp(OffsetDateTime timestamp) { this.timestamp = timestamp; }
 }

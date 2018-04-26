@@ -42,7 +42,10 @@ public class WarcValidator {
         int sleepBetweenChecks = SETTINGS.getSleepTime();
 
         File contentDirectory = new File(SETTINGS.getWarcDir());
-        String validWarcsDirectory = SETTINGS.getValidWarcDir();
+        String warcsDirectory = SETTINGS.getWarcDir(); // New warcs is placed here
+        String validWarcsDirectory = SETTINGS.getValidWarcDir(); // Well-formed and valid warcs  is placed here
+        String invalidWarcsDirectory = SETTINGS.getInvalidWarcDir(); // Warcs this isn't Well-formed and valid is placed here
+        String deliveryWarcsDirectory = SETTINGS.getDeliveryWarcDir(); // Walid warcs get copied here for further storing
 
         String reportName;
 
@@ -55,41 +58,32 @@ public class WarcValidator {
             if (files != null && files.length > 0) {
                 logger.info("Will validate and move WARC files from directory: " + contentDirectory);
                 logger.trace("Using Jhove config: " + SETTINGS.getJhoveConfigPath());
-                logger.info("And move valid warcs to: " + validWarcsDirectory);
 
                 ArrayList<File> warcs = service.findAllWarcs(files);
                 ArrayList<File> reports = service.findAllReports(files);
 
-                for (File warc : warcs) {
-                    String warcFilename = warc.getName();
-                    String warcFilePath = warc.getAbsolutePath();
+                if (warcs.size() > 0) {
 
-                    // Check if .warc already exists in /validwarcs
-                    if (service.warcMovedToValid(validWarcsDirectory, warcFilename)) {
-                        logger.info(warcFilename + " already validated and moved to final directory");
-                    } else {
+                    for (File warc : warcs) {
+                        String warcFilename = warc.getName();
+                        String warcFilePath = warc.getAbsolutePath();
 
-                        // if not, check if jhove validation report with same name exists
+                        // check if jhove validation report with same name exists
                         File validationReport = service.reportForWarcExist(reports, warcFilename);
                         if (validationReport != null) {
 
                             // jhove report exists. Check validation status.
                             if (service.warcStatusIsValidAndWellFormed(validationReport)) {
                                 logger.info(warcFilename +
-                                        " , status: Well-formed and valid. Moving WARC to final directory");
-                                // Report status is well formed and valid. Generate md5sum for file.
+                                        " , status: Well-formed and valid. Moving WARC to valid and delivery directory");
                                 String md5Checksum = service.generateMd5(warc);
-
-                                File md5Warc = new File(validWarcsDirectory, md5Checksum);
-
-                                // Copy .warc file to /validwarcs with a filename including the md5sum
-                                service.copyWarcToValidWarcsFolder(warc, md5Warc);
-
-                                // Set file permissions
-                                service.setGroupOnFile(md5Warc);
+                                service.copyToValid(warcsDirectory, deliveryWarcsDirectory, warcFilename, md5Checksum);
+                                service.moveWarcToDirectory(warcsDirectory, validWarcsDirectory, warcFilename);
                             } else {
                                 // Jhove report not valid
-                                logger.debug("WARC: " + warcFilename + " contains errors, will not be moved");
+                                logger.debug("WARC: " + warcFilename + " contains errors, will be moved to invalid directory");
+                                service.moveWarcToDirectory(warcsDirectory, invalidWarcsDirectory, warcFilename);
+
                             }
                             // Jhove report for .warc file doesn't exist. Generate one using Jhove.
                         } else {
@@ -101,6 +95,9 @@ public class WarcValidator {
                             reports = service.findAllReports(files);
                         }
                     }
+                    // Only .open files in /warcs
+                } else {
+                    logger.debug("Directory doesn't contain any closed files to check");
                 }
                 // /warcs directory is empty
             } else {
@@ -117,5 +114,7 @@ public class WarcValidator {
         }
     }
 
-    public static Settings getSettings() { return SETTINGS; }
+    public static Settings getSettings() {
+        return SETTINGS;
+    }
 }
