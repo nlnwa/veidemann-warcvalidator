@@ -139,7 +139,7 @@ public class ValidationService {
      * @throws IOException
      */
 
-    public void moveWarcToDirectory(String source, String target, String file) throws FileAlreadyExistsException ,FileSystemException {
+    public void moveWarcToDirectory(String source, String target, String file) throws IOException {
         Path sourceDir = Paths.get(source);
         Path targetDir = Paths.get(target);
 
@@ -151,7 +151,9 @@ public class ValidationService {
         try {
             Files.move(sourceWarc, targetWarc);
             Files.move(sourceXml, targetXml);
-        } catch (Exception ex) {
+        } catch (FileAlreadyExistsException ex) {
+            logger.warn("File already exists: " + ex);
+        } catch (FileSystemException ex) {
             logger.warn("Error copying file to /validwarcs directory: " + ex);
         }
     }
