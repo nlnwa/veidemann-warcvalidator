@@ -4,6 +4,8 @@ import no.nb.nna.veidemann.warcvalidator.model.WarcError;
 import no.nb.nna.veidemann.warcvalidator.repo.RethinkRepository;
 import no.nb.nna.veidemann.warcvalidator.settings.Settings;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
@@ -22,9 +24,10 @@ import java.util.Set;
 public class ValidationService {
 
     private RethinkRepository db;
+    private static final Logger logger = LoggerFactory.getLogger(ValidationService.class);
     private Settings SETTINGS;
 
-    public ValidationService (Settings settings, RethinkRepository rethinkRepository) {
+    public ValidationService(Settings settings, RethinkRepository rethinkRepository) {
         this.db = rethinkRepository;
         this.SETTINGS = settings;
     }
@@ -55,20 +58,21 @@ public class ValidationService {
     /**
      * Helper method that generates a hashmap of a message field in the xml
      * so that all the attributes for the field is included in the message
+     *
      * @param element
      * @return
      */
     private static HashMap<String, String> getMessageInXml(Element element) {
         NamedNodeMap attributes = element.getAttributes();
         int numAttrs = attributes.getLength();
-        HashMap <String, String> messageMap = new HashMap<>();
+        HashMap<String, String> messageMap = new HashMap<>();
         String msg = element.getTextContent();
-        messageMap.put("text",msg);
-        for(int i = 0; i < numAttrs; i++) {
+        messageMap.put("text", msg);
+        for (int i = 0; i < numAttrs; i++) {
             Attr attr = (Attr) attributes.item(i);
             String attrName = attr.getNodeName();
             String attrValue = attr.getNodeValue();
-            messageMap.put(attrName,attrValue);
+            messageMap.put(attrName, attrValue);
         }
         return messageMap;
     }
@@ -135,7 +139,7 @@ public class ValidationService {
      * @throws IOException
      */
 
-    public void moveWarcToDirectory(String source,String target, String file) throws IOException {
+    public void moveWarcToDirectory(String source, String target, String file) throws IOException {
         Path sourceDir = Paths.get(source);
         Path targetDir = Paths.get(target);
 
@@ -144,9 +148,14 @@ public class ValidationService {
 
         Path sourceXml = sourceDir.resolve(file + ".xml");
         Path targetXml = targetDir.resolve(file + ".xml");
-
-        Files.move(sourceWarc, targetWarc);
-        Files.move(sourceXml, targetXml);
+        try {
+            Files.move(sourceWarc, targetWarc);
+            Files.move(sourceXml, targetXml);
+        } catch (FileAlreadyExistsException ex) {
+            logger.warn("File already exists: " + ex);
+        } catch (FileSystemException ex) {
+            logger.warn("Error copying file to /validwarcs directory: " + ex);
+        }
     }
 
 
@@ -158,14 +167,17 @@ public class ValidationService {
      * @throws IOException
      */
 
-    public void copyToValid (String source, String target, String file, String md5Checksum) throws IOException {
+    public void copyToValid(String source, String target, String file, String md5Checksum) throws IOException {
         Path sourceFile = Paths.get(source).resolve(file);
         Path targetFile = Paths.get(target).resolve(md5Checksum);
 
-        Files.copy(sourceFile, targetFile);
+        try {
+            Files.copy(sourceFile, targetFile);
+        } catch (FileAlreadyExistsException ex) {
+            logger.warn("File already exists: " + ex);
+        }
 
         setGroupOnFile(targetFile);
-
     }
 
     /**
@@ -177,7 +189,7 @@ public class ValidationService {
      */
     public void setGroupOnFile(Path file) throws IOException { // before file
         String groupid = "10009";
-       // Path path = file.toPath();
+        // Path path = file.toPath();
         Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-rw-r--");
 
         // Set permissioin
@@ -189,7 +201,7 @@ public class ValidationService {
         GroupPrincipal group = lookupService.lookupPrincipalByGroupName(groupid);
 
         // Change group attribute !REMOVE when running in debug
-        Files.getFileAttributeView(file,PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).setGroup(group);
+        Files.getFileAttributeView(file, PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).setGroup(group);
     }
 
     /**
