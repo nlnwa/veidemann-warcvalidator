@@ -106,7 +106,9 @@ public class WarcValidator {
                             }
                         } catch (JhoveException | SAXException | ParserConfigurationException |
                                 XPathExpressionException | IOException ex) {
-                            logger.warn(ex.getLocalizedMessage());
+                            logger.warn(ex.getLocalizedMessage(), ex);
+                        } catch (NullPointerException ex) {
+                            logger.error(ex.getLocalizedMessage(), ex);
                         }
                     }
                     // Only .open files in /warcs
