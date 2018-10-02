@@ -3,6 +3,7 @@ package no.nb.nna.veidemann.warcvalidator;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
 import com.typesafe.config.ConfigFactory;
+import edu.harvard.hul.ois.jhove.JhoveException;
 import no.nb.nna.veidemann.warcvalidator.repo.RethinkRepository;
 import no.nb.nna.veidemann.warcvalidator.settings.Settings;
 import org.slf4j.Logger;
@@ -29,7 +30,16 @@ public class WarcValidator {
     public WarcValidator() {
     }
 
-    public WarcValidator start() throws ParserConfigurationException, SAXException, XPathExpressionException, IOException {
+    public void start() {
+        try {
+            startValidation();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    public void startValidation() {
 
         RethinkRepository db = null;
         try {
@@ -46,8 +56,6 @@ public class WarcValidator {
         String validWarcsDirectory = SETTINGS.getValidWarcDir(); // Well-formed and valid warcs  is placed here
         String invalidWarcsDirectory = SETTINGS.getInvalidWarcDir(); // Warcs this isn't Well-formed and valid is placed here
         String deliveryWarcsDirectory = SETTINGS.getDeliveryWarcDir(); // Walid warcs get copied here for further storing
-
-        String reportName;
 
         ValidationService service = new ValidationService(SETTINGS, db);
 
@@ -70,29 +78,35 @@ public class WarcValidator {
 
                         // check if jhove validation report with same name exists
                         File validationReport = service.reportForWarcExist(reports, warcFilename);
-                        if (validationReport != null) {
 
-                            // jhove report exists. Check validation status.
-                            if (service.warcStatusIsValidAndWellFormed(validationReport)) {
-                                logger.info(warcFilename +
-                                        " , status: Well-formed and valid. Moving WARC to valid and delivery directory");
-                                String md5Checksum = service.generateMd5(warc);
-                                service.copyToValid(warcsDirectory, deliveryWarcsDirectory, warcFilename, md5Checksum);
-                                service.moveWarcToDirectory(warcsDirectory, validWarcsDirectory, warcFilename);
+                        try {
+                            if (validationReport != null) {
+                                // jhove report exists. Check validation status.
+                                if (service.warcStatusIsValidAndWellFormed(validationReport)) {
+                                    logger.info(warcFilename +
+                                            " , status: Well-formed and valid. Moving WARC to valid and delivery directory");
+                                    String md5Checksum = service.generateMd5(warc);
+                                    service.copyToValid(warcsDirectory, deliveryWarcsDirectory, warcFilename, md5Checksum);
+                                    service.moveWarcToDirectory(warcsDirectory, validWarcsDirectory, warcFilename);
+                                } else {
+                                    // Jhove report not valid
+                                    logger.debug("WARC: " + warcFilename + " contains errors, will be moved to invalid directory");
+                                    service.moveWarcToDirectory(warcsDirectory, invalidWarcsDirectory, warcFilename);
+
+                                }
+
+                                // Jhove report for .warc file doesn't exist. Generate one using Jhove.
                             } else {
-                                // Jhove report not valid
-                                logger.debug("WARC: " + warcFilename + " contains errors, will be moved to invalid directory");
-                                service.moveWarcToDirectory(warcsDirectory, invalidWarcsDirectory, warcFilename);
-
+                                logger.info("Can't find a validation report for: " + warcFilename);
+                                String reportName = warcFilePath + ".xml";
+                                logger.info("Will create report using Jhove, with name: " + reportName);
+                                service.validateWarc(warcFilePath, reportName);
+                                files = contentDirectory.listFiles();
+                                reports = service.findAllReports(files);
                             }
-                            // Jhove report for .warc file doesn't exist. Generate one using Jhove.
-                        } else {
-                            logger.info("Can't find a validation report for: " + warcFilename);
-                            reportName = warcFilePath + ".xml";
-                            logger.info("Will create report using Jhove, with name: " + reportName);
-                            service.validateWarc(warcFilePath, reportName);
-                            files = contentDirectory.listFiles();
-                            reports = service.findAllReports(files);
+                        } catch (JhoveException | SAXException | ParserConfigurationException |
+                                XPathExpressionException | IOException ex) {
+                            logger.warn(ex.getLocalizedMessage());
                         }
                     }
                     // Only .open files in /warcs
@@ -103,7 +117,6 @@ public class WarcValidator {
             } else {
                 logger.debug("No files in directory to check.");
             }
-            // set sleep time before next check
             try {
                 logger.trace("Thread will sleep for: " + sleepBetweenChecks + " seconds");
                 int sleepTime = sleepBetweenChecks * 1000;

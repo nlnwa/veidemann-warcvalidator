@@ -1,5 +1,6 @@
 package no.nb.nna.veidemann.warcvalidator;
 
+import edu.harvard.hul.ois.jhove.JhoveException;
 import no.nb.nna.veidemann.warcvalidator.model.WarcError;
 import no.nb.nna.veidemann.warcvalidator.repo.RethinkRepository;
 import no.nb.nna.veidemann.warcvalidator.settings.Settings;
@@ -289,14 +290,9 @@ public class ValidationService {
      * @param reportName
      */
 
-    public void validateWarc(String warcFilePath, String reportName) {
+    public void validateWarc(String warcFilePath, String reportName) throws JhoveException {
         JhoveWarcFileValidator validator = new JhoveWarcFileValidator(warcFilePath, reportName, SETTINGS);
-        try {
-            validator.validateFile();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        validator.validateFile();
     }
 
 }
