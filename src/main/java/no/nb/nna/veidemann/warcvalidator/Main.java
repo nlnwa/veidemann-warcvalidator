@@ -1,11 +1,5 @@
 package no.nb.nna.veidemann.warcvalidator;
 
-import org.xml.sax.SAXException;
-
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPathExpressionException;
-import java.io.IOException;
-
 /**
  * Main class for launching the service.
  */
@@ -17,8 +11,7 @@ public final class Main {
     private Main() {
     }
 
-    public static void main(String[] args) throws ParserConfigurationException, SAXException, XPathExpressionException, IOException {
-
+    public static void main(String[] args) {
         System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
 
         new WarcValidator().start();

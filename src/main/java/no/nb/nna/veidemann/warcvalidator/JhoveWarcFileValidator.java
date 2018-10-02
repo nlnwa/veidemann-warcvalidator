@@ -1,9 +1,6 @@
 package no.nb.nna.veidemann.warcvalidator;
 
-import edu.harvard.hul.ois.jhove.App;
-import edu.harvard.hul.ois.jhove.JhoveBase;
-import edu.harvard.hul.ois.jhove.Module;
-import edu.harvard.hul.ois.jhove.OutputHandler;
+import edu.harvard.hul.ois.jhove.*;
 import edu.harvard.hul.ois.jhove.handler.XmlHandler;
 import edu.harvard.hul.ois.jhove.module.WarcModule;
 import no.nb.nna.veidemann.warcvalidator.settings.Settings;
@@ -45,7 +42,7 @@ public class JhoveWarcFileValidator {
      * @https://github.com/openpreserve/jhove In this use case: .warc files through the external WarcModule.
      */
 
-    public void validateFile() throws Exception {
+    public void validateFile() throws JhoveException {
 
 
         int date[] = {2018, 20, 02};
@@ -76,7 +73,11 @@ public class JhoveWarcFileValidator {
             je.setShowRawFlag(false);
             je.setSignatureFlag(false);
 
-            je.dispatch(app, module, null, handler, xmlOutFile.getAbsolutePath(), new String[]{warcFilename.getAbsolutePath()});
+            try {
+                je.dispatch(app, module, null, handler, xmlOutFile.getAbsolutePath(), new String[]{warcFilename.getAbsolutePath()});
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         } finally {
             if (handler != null) {
                 handler.close();
