@@ -49,7 +49,7 @@ public class ValidationService {
         try {
             String md5 = DigestUtils.md5Hex(fis);
             fis.close();
-            return name + "_md5_" + md5 + ending;
+            return name + "-md5_" + md5 + ending;
         } catch (IOException e) {
             e.printStackTrace();
         }
