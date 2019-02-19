@@ -53,7 +53,11 @@ public class WarcError {
         this.nonCompliantWarcIds = nonCompliantWarcId;
     }
 
-    public OffsetDateTime getTimestamp() { return timestamp; }
+    public OffsetDateTime getTimestamp() {
+        return timestamp;
+    }
 
-    public void setTimestamp(OffsetDateTime timestamp) { this.timestamp = timestamp; }
+    public void setTimestamp(OffsetDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
 }

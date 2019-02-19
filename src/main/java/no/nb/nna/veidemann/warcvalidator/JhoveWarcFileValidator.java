@@ -45,7 +45,7 @@ public class JhoveWarcFileValidator {
     public void validateFile() throws JhoveException {
 
 
-        int date[] = {2018, 20, 02};
+        int[] date = {2018, 20, 02};
 
         App app = new App("Veidemann WARC validator", "1.0", date, "usage", "rights");
 

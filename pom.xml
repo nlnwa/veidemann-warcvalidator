@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
@@ -31,8 +30,8 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <docker.tag>latest</docker.tag>
 
-        <docker.java.image>openjdk:8u151-jdk-alpine</docker.java.image>
-        <jhove.version>1.18.1</jhove.version>
+        <docker.java.image>openjdk:8-jre-alpine</docker.java.image>
+        <jhove.version>1.20.1</jhove.version>
 
         <log4j.version>2.7</log4j.version>
     </properties>
@@ -142,6 +141,7 @@
                             <configurationDirectory>config</configurationDirectory>
                             <endorsedDir>plugins</endorsedDir>
                             <preAssembleDirectory>src/main/distfiles</preAssembleDirectory>
+                            <!--suppress UnresolvedMavenProperty -->
                             <extraJvmArguments>-Dconfig.file=@BASEDIR@/config/application.conf
                                 -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap
                             </extraJvmArguments>
@@ -161,7 +161,7 @@
                     <plugin>
                         <groupId>io.fabric8</groupId>
                         <artifactId>docker-maven-plugin</artifactId>
-                        <version>0.23.0</version>
+                        <version>0.28.0</version>
                         <executions>
                             <execution>
                                 <id>docker-build</id>
@@ -197,11 +197,11 @@
                                         </env>
                                         <cmd>
                                             <exec>
-                                                <arg>/warcvalidator/bin/${project.artifactId}</arg>
+                                                <arg>/veidemann/bin/${project.artifactId}</arg>
                                             </exec>
                                         </cmd>
                                         <assembly>
-                                            <targetDir>/warcvalidator</targetDir>
+                                            <targetDir>/veidemann</targetDir>
                                             <inline>
                                                 <includeBaseDirectory>true</includeBaseDirectory>
                                                 <fileSets>
@@ -230,7 +230,7 @@
                                                 <files>
                                                     <file>
                                                         <source>LICENSE</source>
-                                                        <outputDirectory></outputDirectory>
+                                                        <outputDirectory>/</outputDirectory>
                                                         <fileMode>0644</fileMode>
                                                     </file>
                                                 </files>
