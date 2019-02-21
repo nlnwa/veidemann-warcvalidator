@@ -99,7 +99,7 @@ public class ValidationService {
         String warcRecordIDHeader = "";
 
         XMLInputFactory factory = XMLInputFactory.newInstance();
-        XMLStreamReader streamReader = factory.createXMLStreamReader(Files.newInputStream(reportPath));
+        XMLStreamReader streamReader = factory.createXMLStreamReader(Files.newBufferedReader(reportPath));
         try {
             while (streamReader.hasNext()) {
                 if (streamReader.next() == XMLStreamReader.START_ELEMENT) {
