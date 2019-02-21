@@ -4,125 +4,108 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
 import com.typesafe.config.ConfigFactory;
 import edu.harvard.hul.ois.jhove.JhoveException;
+import no.nb.nna.veidemann.warcvalidator.model.WarcStatus;
 import no.nb.nna.veidemann.warcvalidator.repo.RethinkRepository;
+import no.nb.nna.veidemann.warcvalidator.service.ValidationService;
 import no.nb.nna.veidemann.warcvalidator.settings.Settings;
+import no.nb.nna.veidemann.warcvalidator.validator.JhoveWarcFileValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPathExpressionException;
-import java.io.File;
+import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class WarcValidator {
 
     private static final Logger logger = LoggerFactory.getLogger(WarcValidator.class);
     private static final Settings SETTINGS;
 
+    private final static int sleepTime;
+
+    private final static String deliveryPermissions;
+    private final static String deliveryGroupId;
+
+    private final static Path warcsDirectory;
+    private final static Path validWarcsDirectory;
+    private final static Path invalidWarcsDirectory;
+    private final static Path deliveryWarcsDirectory;
+
     static {
         Config config = ConfigFactory.load();
         config.checkValid(ConfigFactory.defaultReference());
         SETTINGS = ConfigBeanFactory.create(config, Settings.class);
-    }
 
-    public WarcValidator() {
+        sleepTime = SETTINGS.getSleepTime();
+
+        deliveryPermissions = SETTINGS.getDeliveryPermissions();
+        deliveryGroupId = SETTINGS.getDeliveryGroupId();
+
+        warcsDirectory = Paths.get(SETTINGS.getWarcDir()); // New warcs is placed here
+        validWarcsDirectory = Paths.get(SETTINGS.getValidWarcDir()); // Well-formed and valid warcs  is placed here
+        invalidWarcsDirectory = Paths.get(SETTINGS.getInvalidWarcDir()); // Warcs this isn't Well-formed and valid is placed here
+        deliveryWarcsDirectory = Paths.get(SETTINGS.getDeliveryWarcDir()); // Valid warcs get copied here for further storing
     }
 
     public void start() {
-        try {
-            startValidation();
+        logger.info("Veidemann warcvalidator (v. {}) started", WarcValidator.class.getPackage().getImplementationVersion());
+
+        try (RethinkRepository database = new RethinkRepository(SETTINGS.getDbHost(), SETTINGS.getDbPort(),
+                SETTINGS.getDbUser(), SETTINGS.getDbPassword())) {
+
+            final JhoveWarcFileValidator warcFileValidator = new JhoveWarcFileValidator(SETTINGS.getJhoveConfigPath());
+            final ValidationService validationService = new ValidationService(database, warcFileValidator);
+
+            startValidation(validationService);
+
+        } catch (InterruptedException ex) {
+            logger.info(ex.getLocalizedMessage(), ex);
+            System.exit(1);
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
         }
     }
 
-    public void startValidation() {
+    public void startValidation(ValidationService service) throws InterruptedException {
+        while (true) try {
+            for (Path warcPath : service.findAllWarcs(warcsDirectory)) {
+                // validate
+                final Path reportPath = service.validateWarcFile(warcPath);
+                // inspect report
+                final WarcStatus warcStatus = service.inspectReport(reportPath);
 
-        RethinkRepository db = new RethinkRepository(SETTINGS.getDbHost(), SETTINGS.getDbPort(),
-                SETTINGS.getDbUser(), SETTINGS.getDbPassword());
+                if (warcStatus.isValidAndWellFormed()) {
+                    logger.debug(warcPath + " is well-formed and valid.");
 
-        int sleepBetweenChecks = SETTINGS.getSleepTime();
+                    final Path deliveryPath = deliveryWarcsDirectory.resolve(service.checksumFilename(warcPath));
 
-        File contentDirectory = new File(SETTINGS.getWarcDir());
-        String warcsDirectory = SETTINGS.getWarcDir(); // New warcs is placed here
-        String validWarcsDirectory = SETTINGS.getValidWarcDir(); // Well-formed and valid warcs  is placed here
-        String invalidWarcsDirectory = SETTINGS.getInvalidWarcDir(); // Warcs this isn't Well-formed and valid is placed here
-        String deliveryWarcsDirectory = SETTINGS.getDeliveryWarcDir(); // Walid warcs get copied here for further storing
+                    // copy warc to delivery
+                    Files.copy(warcPath, deliveryPath);
 
-        ValidationService service = new ValidationService(SETTINGS, db);
+                    // set permissions/group on warc in delivery
+                    service.setFileGroupId(deliveryPath, deliveryGroupId);
+                    service.setFilePermissions(deliveryPath, deliveryPermissions);
 
-        logger.info("Veidemann warcvalidator (v. {}) started", WarcValidator.class.getPackage().getImplementationVersion());
-
-        while (true) {
-
-            File[] files = contentDirectory.listFiles();
-
-            if (files != null && files.length > 0) {
-                logger.debug("Will validate and move WARC files from directory: " + contentDirectory);
-                logger.trace("Using Jhove config: " + SETTINGS.getJhoveConfigPath());
-
-                ArrayList<File> warcs = service.findAllWarcs(files);
-                ArrayList<File> reports = service.findAllReports(files);
-
-                if (warcs.size() > 0) {
-
-                    for (File warc : warcs) {
-                        String warcFilename = warc.getName();
-                        String warcFilePath = warc.getAbsolutePath();
-
-                        // check if jhove validation report with same name exists
-                        File validationReport = service.reportForWarcExist(reports, warcFilename);
-
-                        try {
-                            if (validationReport != null) {
-                                // jhove report exists. Check validation status.
-                                if (service.warcStatusIsValidAndWellFormed(validationReport)) {
-                                    logger.debug(warcFilename +
-                                            " , status: Well-formed and valid. Moving WARC to valid and delivery directory");
-                                    String md5Checksum = service.generateMd5(warc);
-                                    service.copyToValid(warcsDirectory, deliveryWarcsDirectory, warcFilename, md5Checksum);
-                                    service.moveWarcToDirectory(warcsDirectory, validWarcsDirectory, warcFilename);
-                                } else {
-                                    // Jhove report not valid
-                                    logger.debug("WARC: " + warcFilename + " contains errors, will be moved to invalid directory");
-                                    service.moveWarcToDirectory(warcsDirectory, invalidWarcsDirectory, warcFilename);
-
-                                }
-
-                                // Jhove report for .warc file doesn't exist. Generate one using Jhove.
-                            } else {
-                                logger.debug("Can't find a validation report for: " + warcFilename);
-                                String reportName = warcFilePath + ".xml";
-                                logger.debug("Will create report using Jhove, with name: " + reportName);
-                                service.validateWarc(warcFilePath, reportName);
-                                files = contentDirectory.listFiles();
-                                reports = service.findAllReports(files);
-                            }
-                        } catch (JhoveException | SAXException | ParserConfigurationException |
-                                XPathExpressionException | IOException ex) {
-                            logger.warn(ex.getLocalizedMessage(), ex);
-                        } catch (NullPointerException ex) {
-                            logger.error(ex.getLocalizedMessage(), ex);
-                        }
-                    }
-                    // Only .open files in /warcs
+                    // move warc and report to validwarcs
+                    Files.move(warcPath, validWarcsDirectory.resolve(warcPath.getFileName()));
+                    Files.move(reportPath, validWarcsDirectory.resolve(reportPath.getFileName()));
                 } else {
-                    logger.debug("Directory doesn't contain any closed files to check");
+                    logger.debug(warcPath + " contains errors");
+
+                    // move warc and report to invalidwarcs
+                    Files.move(warcPath, invalidWarcsDirectory.resolve(warcPath.getFileName()));
+                    Files.move(reportPath, invalidWarcsDirectory.resolve(reportPath.getFileName()));
                 }
-                // /warcs directory is empty
-            } else {
-                logger.debug("No files in directory to check.");
+                service.saveWarcStatus(warcStatus);
             }
-            try {
-                logger.trace("Thread will sleep for: " + sleepBetweenChecks + " seconds");
-                int sleepTime = sleepBetweenChecks * 1000;
-                Thread.sleep(sleepTime);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+
+            Thread.sleep(sleepTime * 1000);
+
+        } catch (JhoveException | XMLStreamException | IOException ex) {
+            logger.warn(ex.getLocalizedMessage(), ex);
         }
     }
 }
