@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 public class WarcValidator {
 
@@ -83,21 +84,21 @@ public class WarcValidator {
                     final Path deliveryPath = deliveryWarcsDirectory.resolve(service.checksumFilename(warcPath));
 
                     // copy warc to delivery
-                    Files.copy(warcPath, deliveryPath);
+                    Files.copy(warcPath, deliveryPath, StandardCopyOption.REPLACE_EXISTING);
 
                     // set permissions/group on warc in delivery
                     service.setFileGroupId(deliveryPath, deliveryGroupId);
                     service.setFilePermissions(deliveryPath, deliveryPermissions);
 
                     // move warc and report to validwarcs
-                    Files.move(warcPath, validWarcsDirectory.resolve(warcPath.getFileName()));
-                    Files.move(reportPath, validWarcsDirectory.resolve(reportPath.getFileName()));
+                    Files.move(warcPath, validWarcsDirectory.resolve(warcPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                    Files.move(reportPath, validWarcsDirectory.resolve(reportPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
                 } else {
                     logger.debug(warcPath + " contains errors");
 
                     // move warc and report to invalidwarcs
-                    Files.move(warcPath, invalidWarcsDirectory.resolve(warcPath.getFileName()));
-                    Files.move(reportPath, invalidWarcsDirectory.resolve(reportPath.getFileName()));
+                    Files.move(warcPath, invalidWarcsDirectory.resolve(warcPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                    Files.move(reportPath, invalidWarcsDirectory.resolve(reportPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
                 }
                 service.saveWarcStatus(warcStatus);
             }
