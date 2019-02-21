@@ -23,35 +23,67 @@ public class Settings {
 
     private String jhoveConfigPath;
 
+    private String deliveryPermissions;
+
+    private String deliveryGroupId;
+
     private int sleepTime;
 
-    public String getDbHost() { return dbHost; }
+    public String getDbHost() {
+        return dbHost;
+    }
 
-    public void setDbHost(String dbHost) { this.dbHost = dbHost; }
+    public void setDbHost(String dbHost) {
+        this.dbHost = dbHost;
+    }
 
-    public int getDbPort() { return dbPort; }
+    public int getDbPort() {
+        return dbPort;
+    }
 
-    public void setDbPort(int dbPort) { this.dbPort = dbPort; }
+    public void setDbPort(int dbPort) {
+        this.dbPort = dbPort;
+    }
 
-    public String getDbName() { return dbName; }
+    public String getDbName() {
+        return dbName;
+    }
 
-    public void setDbName(String dbName) { this.dbName = dbName; }
+    public void setDbName(String dbName) {
+        this.dbName = dbName;
+    }
 
-    public String getDbUser() { return dbUser; }
+    public String getDbUser() {
+        return dbUser;
+    }
 
-    public void setDbUser(String dbUser) { this.dbUser = dbUser; }
+    public void setDbUser(String dbUser) {
+        this.dbUser = dbUser;
+    }
 
-    public String getDbPassword() { return dbPassword; }
+    public String getDbPassword() {
+        return dbPassword;
+    }
 
-    public void setDbPassword(String dbPassword) { this.dbPassword = dbPassword; }
+    public void setDbPassword(String dbPassword) {
+        this.dbPassword = dbPassword;
+    }
 
-    public String getWarcDir() { return warcDir; }
+    public String getWarcDir() {
+        return warcDir;
+    }
 
-    public void setWarcDir(String warcDir) { this.warcDir = warcDir; }
+    public void setWarcDir(String warcDir) {
+        this.warcDir = warcDir;
+    }
 
-    public String getDeliveryWarcDir() { return deliveryWarcDir; }
+    public String getDeliveryWarcDir() {
+        return deliveryWarcDir;
+    }
 
-    public void setDeliveryWarcDir(String deliveryWarcDir) { this.deliveryWarcDir = deliveryWarcDir; }
+    public void setDeliveryWarcDir(String deliveryWarcDir) {
+        this.deliveryWarcDir = deliveryWarcDir;
+    }
 
     public String getJhoveConfigPath() {
         return jhoveConfigPath;
@@ -69,11 +101,36 @@ public class Settings {
         this.sleepTime = sleepTime;
     }
 
-    public String getInvalidWarcDir() { return invalidWarcDir; }
+    public String getInvalidWarcDir() {
+        return invalidWarcDir;
+    }
 
-    public void setInvalidWarcDir(String invalidWarcDir) { this.invalidWarcDir = invalidWarcDir; }
+    public void setInvalidWarcDir(String invalidWarcDir) {
+        this.invalidWarcDir = invalidWarcDir;
+    }
 
-    public String getValidWarcDir() { return validWarcDir; }
+    public String getValidWarcDir() {
+        return validWarcDir;
+    }
 
-    public void setValidWarcDir(String validWarcDir) { this.validWarcDir = validWarcDir; }
+    public void setValidWarcDir(String validWarcDir) {
+        this.validWarcDir = validWarcDir;
+    }
+
+    public String getDeliveryPermissions() {
+        return this.deliveryPermissions;
+    }
+
+    public void setDeliveryPermissions(String permission) {
+        this.deliveryPermissions = permission;
+    }
+
+
+    public String getDeliveryGroupId() {
+        return deliveryGroupId;
+    }
+
+    public void setDeliveryGroupId(String deliveryGroupId) {
+        this.deliveryGroupId = deliveryGroupId;
+    }
 }

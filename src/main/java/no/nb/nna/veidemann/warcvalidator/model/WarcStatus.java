@@ -4,7 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class WarcError {
+public class WarcStatus {
 
     private String filename;
     private String status;
@@ -12,8 +12,8 @@ public class WarcError {
     private ArrayList<String> nonCompliantWarcIds;
     private OffsetDateTime timestamp;
 
-    public WarcError(String filename, String status, ArrayList<HashMap<String, String>> messages,
-                     ArrayList<String> nonCompliantWarcIds, OffsetDateTime timestamp) {
+    public WarcStatus(String filename, String status, ArrayList<HashMap<String, String>> messages,
+                      ArrayList<String> nonCompliantWarcIds, OffsetDateTime timestamp) {
         this.filename = filename;
         this.status = status;
         this.messages = messages;
@@ -59,5 +59,19 @@ public class WarcError {
 
     public void setTimestamp(OffsetDateTime timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public boolean isValidAndWellFormed() {
+        return status.equals("Well-Formed and valid");
+    }
+
+    public String toString() {
+        StringBuilder message = new StringBuilder();
+        messages.forEach((msg) ->
+                msg.forEach((key, value) -> {
+                    message.append(String.format("\t%s: %s\n", key, value));
+                })
+        );
+        return String.format("File: %s\nStatus: %s\nMessages:\n%s", filename, status, message.toString());
     }
 }
