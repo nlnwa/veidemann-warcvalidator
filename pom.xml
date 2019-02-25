@@ -36,6 +36,14 @@
         <log4j.version>2.7</log4j.version>
     </properties>
 
+
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
     <dependencies>
 
         <dependency>
@@ -80,10 +88,15 @@
             <version>${jhove.version}</version>
         </dependency>
 
-        <dependency>
+        <!--dependency>
             <groupId>org.openpreservation.jhove</groupId>
             <artifactId>jhove-ext-modules</artifactId>
             <version>${jhove.version}</version>
+        </dependency-->
+        <dependency>
+            <groupId>com.github.maeb</groupId>
+            <artifactId>jhove</artifactId>
+            <version>maeb~jwat-SNAPSHOT</version>
         </dependency>
 
         <dependency>
