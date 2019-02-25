@@ -14,10 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 
 public class WarcValidator {
 
@@ -71,8 +68,8 @@ public class WarcValidator {
     }
 
     public void startValidation(ValidationService service) throws InterruptedException {
-        while (true) try {
-            for (Path warcPath : service.findAllWarcs(warcsDirectory)) {
+        while (true) try (DirectoryStream<Path> warcPaths = service.findAllWarcs(warcsDirectory)) {
+            for (Path warcPath : warcPaths) {
                 // validate
                 final Path reportPath = service.validateWarcFile(warcPath);
                 // inspect report
