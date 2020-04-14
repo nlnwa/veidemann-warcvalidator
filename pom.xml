@@ -113,6 +113,12 @@
     </dependencies>
 
     <build>
+
+        <resources>
+            <resource>
+                <directory>src/main/jib/app/resources</directory>
+            </resource>
+        </resources>
         <plugins>
             <!-- Make version number available for application -->
             <plugin>
