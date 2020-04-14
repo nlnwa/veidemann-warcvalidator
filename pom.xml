@@ -25,15 +25,14 @@
     <description>Validate WARC files using Jhove</description>
 
     <properties>
+
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <docker.tag>latest</docker.tag>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <docker.tag>${project.version}</docker.tag>
 
-        <docker.java.image>openjdk:8-jre-alpine</docker.java.image>
         <jhove.version>1.20.1</jhove.version>
-
-        <log4j.version>2.7</log4j.version>
+        <log4j.version>2.12.1</log4j.version>
     </properties>
 
 
@@ -49,7 +48,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.21</version>
+            <version>1.7.25</version>
         </dependency>
 
         <dependency>
@@ -119,13 +118,38 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.0.2</version>
+                <version>3.2.0</version>
                 <configuration>
                     <archive>
                         <manifest>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
                     </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>2.0.0</version>
+                <configuration>
+                    <to>
+                        <image>docker.io/norsknettarkiv/${project.artifactId}</image>
+                        <tags>
+                            <tag>${docker.tag}</tag>
+                        </tags>
+                        <auth>
+                            <username>${env.DOCKER_USERNAME}</username>
+                            <password>${env.DOCKER_PASSWORD}</password>
+                        </auth>
+                    </to>
+                    <container>
+                        <ports>
+                            <port>50051</port>
+                        </ports>
+                        <jvmFlags>
+                            <jvmFlag>-Dfile.encoding=UTF-8</jvmFlag>
+                        </jvmFlags>
+                    </container>
                 </configuration>
             </plugin>
         </plugins>
@@ -136,123 +160,36 @@
             <id>docker-build</id>
             <build>
                 <plugins>
-                    <!-- Create assembly with startup scripts and dependencies -->
                     <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>appassembler-maven-plugin</artifactId>
-                        <version>2.0.0</version>
-                        <configuration>
-                            <programs>
-                                <program>
-                                    <mainClass>no.nb.nna.veidemann.warcvalidator.Main</mainClass>
-                                    <id>${project.artifactId}</id>
-                                </program>
-                            </programs>
-                            <binFolder>bin</binFolder>
-                            <repositoryName>lib</repositoryName>
-                            <repositoryLayout>flat</repositoryLayout>
-                            <configurationDirectory>config</configurationDirectory>
-                            <endorsedDir>plugins</endorsedDir>
-                            <preAssembleDirectory>src/main/distfiles</preAssembleDirectory>
-                            <!--suppress UnresolvedMavenProperty -->
-                            <extraJvmArguments>-Dconfig.file=@BASEDIR@/config/application.conf
-                                -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap
-                            </extraJvmArguments>
-                        </configuration>
+                        <groupId>com.google.cloud.tools</groupId>
+                        <artifactId>jib-maven-plugin</artifactId>
                         <executions>
                             <execution>
                                 <phase>package</phase>
                                 <goals>
-                                    <goal>assemble</goal>
+                                    <goal>dockerBuild</goal>
                                 </goals>
                             </execution>
                         </executions>
                     </plugin>
-
-                    <!-- Build Docker Image -->
-
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>docker-build-and-push</id>
+            <build>
+                <plugins>
                     <plugin>
-                        <groupId>io.fabric8</groupId>
-                        <artifactId>docker-maven-plugin</artifactId>
-                        <version>0.28.0</version>
+                        <groupId>com.google.cloud.tools</groupId>
+                        <artifactId>jib-maven-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>docker-build</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>build</goal>
                                 </goals>
                             </execution>
                         </executions>
-                        <configuration>
-                            <images>
-                                <image>
-                                    <name>norsknettarkiv/${project.artifactId}</name>
-                                    <alias>${project.artifactId}</alias>
-                                    <build>
-                                        <from>${docker.java.image}</from>
-                                        <maintainer>National Library of Norway</maintainer>
-                                        <tags>
-                                            <tag>${docker.tag}</tag>
-                                        </tags>
-                                        <optimise>true</optimise>
-                                        <volumes>
-                                            <volume>/warcs</volume>
-                                            <volume>/validwarcs</volume>
-                                            <volume>/invalidwarcs</volume>
-                                            <volume>/delivery</volume>
-                                        </volumes>
-                                        <env>
-                                            <WARC_DIR>/warcs</WARC_DIR>
-                                            <VALID_WARC_DIR>/validwarcs</VALID_WARC_DIR>
-                                            <INVALID_WARC_DIR>/invalidwarcs</INVALID_WARC_DIR>
-                                            <DELIVERY_WARC_DIR>/delivery</DELIVERY_WARC_DIR>
-                                        </env>
-                                        <cmd>
-                                            <exec>
-                                                <arg>/veidemann/bin/${project.artifactId}</arg>
-                                            </exec>
-                                        </cmd>
-                                        <assembly>
-                                            <targetDir>/veidemann</targetDir>
-                                            <inline>
-                                                <includeBaseDirectory>true</includeBaseDirectory>
-                                                <fileSets>
-                                                    <fileSet>
-                                                        <directory>target/appassembler/bin</directory>
-                                                        <outputDirectory>bin</outputDirectory>
-                                                        <includes>
-                                                            <include>${project.artifactId}</include>
-                                                        </includes>
-                                                        <fileMode>0755</fileMode>
-                                                    </fileSet>
-                                                    <fileSet>
-                                                        <directory>target/appassembler/bin</directory>
-                                                        <outputDirectory>bin</outputDirectory>
-                                                        <excludes>${project.artifactId}</excludes>
-                                                        <fileMode>0644</fileMode>
-                                                    </fileSet>
-                                                    <fileSet>
-                                                        <directory>target/appassembler</directory>
-                                                        <outputDirectory>/</outputDirectory>
-                                                        <excludes>
-                                                            <exclude>bin</exclude>
-                                                        </excludes>
-                                                    </fileSet>
-                                                </fileSets>
-                                                <files>
-                                                    <file>
-                                                        <source>LICENSE</source>
-                                                        <outputDirectory>/</outputDirectory>
-                                                        <fileMode>0644</fileMode>
-                                                    </file>
-                                                </files>
-                                            </inline>
-                                        </assembly>
-                                    </build>
-                                </image>
-                            </images>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>
