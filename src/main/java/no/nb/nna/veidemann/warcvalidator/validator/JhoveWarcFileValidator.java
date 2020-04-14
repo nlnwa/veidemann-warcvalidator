@@ -1,6 +1,7 @@
 package no.nb.nna.veidemann.warcvalidator.validator;
 
 import edu.harvard.hul.ois.jhove.*;
+import edu.harvard.hul.ois.jhove.Module;
 import edu.harvard.hul.ois.jhove.handler.XmlHandler;
 import edu.harvard.hul.ois.jhove.module.WarcModule;
 import org.slf4j.Logger;
