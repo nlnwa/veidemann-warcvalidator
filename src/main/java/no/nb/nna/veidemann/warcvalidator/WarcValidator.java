@@ -62,7 +62,6 @@ public class WarcValidator {
             final ValidationService validationService = new ValidationService(database, warcFileValidator);
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                System.out.println("Shutting down since JVM is shutting down");
                 isRunning = false;
             }));
 
@@ -83,9 +82,10 @@ public class WarcValidator {
                     return;
                 }
                 try {
-                    // validate
+                    logger.debug("Validating warc: {}", warcPath.toString());
                     final Path reportPath = service.validateWarcFile(warcPath);
-                    // inspect report
+
+                    logger.debug("Inspecting report: {}", reportPath.toString());
                     final WarcStatus warcStatus = service.inspectReport(reportPath);
 
                     if (warcStatus.isValidAndWellFormed()) {
