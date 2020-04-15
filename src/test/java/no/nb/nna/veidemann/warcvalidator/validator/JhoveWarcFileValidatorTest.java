@@ -5,10 +5,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 
 public class JhoveWarcFileValidatorTest {
 
@@ -28,6 +25,8 @@ public class JhoveWarcFileValidatorTest {
                 Path reportPath = folder.getRoot().toPath().resolve(warcPath.getFileName().toString() + ".xml");
                 jwv.validate(warcPath, reportPath);
             }
+        } catch (NoSuchFileException e) {
+            // warcs directory empty and non existant in remote git repo
         }
     }
 }
