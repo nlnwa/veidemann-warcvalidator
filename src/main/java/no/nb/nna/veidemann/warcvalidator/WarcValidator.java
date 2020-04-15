@@ -3,7 +3,6 @@ package no.nb.nna.veidemann.warcvalidator;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
 import com.typesafe.config.ConfigFactory;
-import edu.harvard.hul.ois.jhove.JhoveException;
 import no.nb.nna.veidemann.warcvalidator.model.WarcStatus;
 import no.nb.nna.veidemann.warcvalidator.repo.RethinkRepository;
 import no.nb.nna.veidemann.warcvalidator.service.ValidationService;
@@ -81,10 +80,10 @@ public class WarcValidator {
                 if (!isRunning) {
                     return;
                 }
-                try {
-                    logger.debug("Validating warc: {}", warcPath.toString());
-                    final Path reportPath = service.validateWarcFile(warcPath);
+                logger.debug("Validating warc: {}", warcPath.toString());
+                final Path reportPath = service.validateWarcFile(warcPath);
 
+                try {
                     logger.debug("Inspecting report: {}", reportPath.toString());
                     final WarcStatus warcStatus = service.inspectReport(reportPath);
 
@@ -111,7 +110,7 @@ public class WarcValidator {
                         Files.move(reportPath, invalidWarcsDirectory.resolve(reportPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
                     }
                     service.saveWarcStatus(warcStatus);
-                } catch (JhoveException | XMLStreamException ex) {
+                } catch (XMLStreamException ex) {
                     logger.warn(ex.getLocalizedMessage(), ex);
                 }
             }

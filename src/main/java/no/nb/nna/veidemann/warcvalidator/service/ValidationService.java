@@ -40,7 +40,7 @@ public class ValidationService {
      * @param warcPath path of file to validate
      * @return path of generated report
      */
-    public Path validateWarcFile(Path warcPath) throws JhoveException {
+    public Path validateWarcFile(Path warcPath) {
         final Path reportPath = warcPath.resolveSibling(warcPath.getFileName() + REPORT_SUFFIX);
         validator.validate(warcPath, reportPath);
         return reportPath;
