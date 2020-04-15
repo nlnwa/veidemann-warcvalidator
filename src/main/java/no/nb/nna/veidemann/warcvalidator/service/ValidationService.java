@@ -19,8 +19,8 @@ import java.util.HashMap;
 import java.util.Set;
 
 public class ValidationService {
-    private final static String COMPRESSED_AND_OPEN_WARC_SUFFIX = ".open.warc.gz";
-    private final static String OPEN_WARC_SUFFIX = ".open.warc";
+    private final static String COMPRESSED_AND_OPEN_WARC_SUFFIX = ".warc.gz.open";
+    private final static String OPEN_WARC_SUFFIX = ".warc.open";
     private final static String WARC_SUFFIX = ".warc";
     private final static String COMPRESSED_WARC_SUFFIX = ".warc.gz";
     private final static String MD5_CHECKSUM_PREFIX = "-md5_";
