@@ -118,6 +118,7 @@ public class WarcValidator {
             try {
                 Thread.sleep(sleepTime * 1000);
             } catch (InterruptedException ex) {
+                // noop
             }
         }
     }
