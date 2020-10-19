@@ -1,8 +1,6 @@
 package no.nb.nna.veidemann.warcvalidator.service;
 
-import edu.harvard.hul.ois.jhove.JhoveException;
 import no.nb.nna.veidemann.warcvalidator.model.WarcStatus;
-import no.nb.nna.veidemann.warcvalidator.repo.RethinkRepository;
 import no.nb.nna.veidemann.warcvalidator.validator.JhoveWarcFileValidator;
 import org.apache.commons.codec.digest.DigestUtils;
 
@@ -26,11 +24,9 @@ public class ValidationService {
     private final static String MD5_CHECKSUM_PREFIX = "-md5_";
     private final static String REPORT_SUFFIX = ".xml";
 
-    private JhoveWarcFileValidator validator;
-    private RethinkRepository db;
+    private final JhoveWarcFileValidator validator;
 
-    public ValidationService(RethinkRepository db, JhoveWarcFileValidator validator) {
-        this.db = db;
+    public ValidationService(JhoveWarcFileValidator validator) {
         this.validator = validator;
     }
 
@@ -178,18 +174,5 @@ public class ValidationService {
 
             return isWarc && !isOpen;
         });
-    }
-
-    /**
-     * Save warc status to database
-     *
-     * @param warcStatus validation status
-     */
-    public void saveWarcStatus(WarcStatus warcStatus) {
-        if (warcStatus.isValidAndWellFormed()) {
-            db.insertValidWarc(warcStatus);
-        } else {
-            db.insertFailedWarcInfo(warcStatus);
-        }
     }
 }

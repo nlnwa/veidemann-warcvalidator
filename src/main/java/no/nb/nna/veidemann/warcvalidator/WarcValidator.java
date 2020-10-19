@@ -4,7 +4,6 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
 import com.typesafe.config.ConfigFactory;
 import no.nb.nna.veidemann.warcvalidator.model.WarcStatus;
-import no.nb.nna.veidemann.warcvalidator.repo.RethinkRepository;
 import no.nb.nna.veidemann.warcvalidator.service.ValidationService;
 import no.nb.nna.veidemann.warcvalidator.settings.Settings;
 import no.nb.nna.veidemann.warcvalidator.validator.JhoveWarcFileValidator;
@@ -54,15 +53,11 @@ public class WarcValidator {
     public void start() {
         logger.info("Veidemann warcvalidator (v. {}) started", WarcValidator.class.getPackage().getImplementationVersion());
 
-        try (RethinkRepository database = new RethinkRepository(SETTINGS.getDbHost(), SETTINGS.getDbPort(),
-                SETTINGS.getDbUser(), SETTINGS.getDbPassword())) {
-
+        try {
             final JhoveWarcFileValidator warcFileValidator = new JhoveWarcFileValidator(SETTINGS.getJhoveConfigPath());
-            final ValidationService validationService = new ValidationService(database, warcFileValidator);
+            final ValidationService validationService = new ValidationService(warcFileValidator);
 
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                isRunning = false;
-            }));
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> isRunning = false));
 
             startValidation(validationService);
         } catch (IOException e) {
@@ -110,7 +105,6 @@ public class WarcValidator {
                         Files.move(warcPath, invalidWarcsDirectory.resolve(warcPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
                         Files.move(reportPath, invalidWarcsDirectory.resolve(reportPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
                     }
-                    service.saveWarcStatus(warcStatus);
                 } catch (XMLStreamException ex) {
                     logger.warn(ex.getLocalizedMessage(), ex);
                 }
