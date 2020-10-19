@@ -104,7 +104,7 @@ public class WarcValidator {
                         // delete report
                         Files.delete(reportPath);
                     } else {
-                        logger.debug(warcPath + " contains errors");
+                        logger.warn(warcPath + " contains errors");
 
                         // move warc and report to invalidwarcs
                         Files.move(warcPath, invalidWarcsDirectory.resolve(warcPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
