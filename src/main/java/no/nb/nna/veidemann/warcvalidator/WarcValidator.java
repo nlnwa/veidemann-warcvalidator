@@ -99,9 +99,10 @@ public class WarcValidator {
                         service.setFileGroupId(deliveryPath, deliveryGroupId);
                         service.setFilePermissions(deliveryPath, deliveryPermissions);
 
-                        // move warc and report to validwarcs
+                        // move warc report to validwarcs
                         Files.move(warcPath, validWarcsDirectory.resolve(warcPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
-                        Files.move(reportPath, validWarcsDirectory.resolve(reportPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                        // delete report
+                        Files.delete(reportPath);
                     } else {
                         logger.debug(warcPath + " contains errors");
 
