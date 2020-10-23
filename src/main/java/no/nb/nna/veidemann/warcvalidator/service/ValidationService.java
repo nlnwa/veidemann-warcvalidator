@@ -1,6 +1,5 @@
 package no.nb.nna.veidemann.warcvalidator.service;
 
-import no.nb.nna.veidemann.warcvalidator.model.WarcStatus;
 import no.nb.nna.veidemann.warcvalidator.validator.JhoveWarcFileValidator;
 import org.apache.commons.codec.digest.DigestUtils;
 
@@ -11,9 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Set;
 
 public class ValidationService {
@@ -23,6 +19,7 @@ public class ValidationService {
     private final static String COMPRESSED_WARC_SUFFIX = ".warc.gz";
     private final static String MD5_CHECKSUM_PREFIX = "-md5_";
     private final static String REPORT_SUFFIX = ".xml";
+    private final static String VALID_STATUS = "Well-Formed and valid";
 
     private final JhoveWarcFileValidator validator;
 
@@ -84,15 +81,7 @@ public class ValidationService {
      * @param reportPath path of report
      * @return warc status
      */
-    public WarcStatus inspectReport(Path reportPath) throws IOException, XMLStreamException {
-        final String warcRecordIDHeaderKey = "Warc-Record-ID header value.";
-        final String isNonCompliantKey = "isNonCompliant value.";
-        final String validStatus = "Well-Formed and valid";
-
-        ArrayList<HashMap<String, String>> messages = new ArrayList<>();
-        ArrayList<String> nonCompliantIds = new ArrayList<>();
-        String status = "";
-        String warcRecordIDHeader = "";
+    public boolean isWarcValid(Path reportPath) throws IOException, XMLStreamException {
 
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader streamReader = factory.createXMLStreamReader(Files.newBufferedReader(reportPath));
@@ -100,36 +89,12 @@ public class ValidationService {
             while (streamReader.hasNext()) {
                 if (streamReader.next() == XMLStreamReader.START_ELEMENT) {
                     String elementName = streamReader.getLocalName();
-
                     if ("status".equals(elementName)) {
-                        status = streamReader.getElementText();
-                        if (status.equals(validStatus)) {
-                            break;
-                        }
-                    } else if ("value".equals(elementName)) {
-                        String key = streamReader.getAttributeValue(null, "key");
-                        if (key.equals(warcRecordIDHeaderKey)) {
-                            warcRecordIDHeader = streamReader.getElementText();
-                        } else if (key.equals(isNonCompliantKey)) {
-                            boolean isNonCompliant = streamReader.getElementText().equals("true");
-                            if (isNonCompliant) {
-                                nonCompliantIds.add(warcRecordIDHeader);
-                            }
-                        }
-                    } else if ("message".equals(elementName)) {
-                        HashMap<String, String> messageMap = new HashMap<>();
-                        for (int i = 0; i < streamReader.getAttributeCount(); i++) {
-                            String key = streamReader.getAttributeLocalName(i);
-                            String value = streamReader.getAttributeValue(i);
-                            messageMap.put(key, value);
-                        }
-                        String message = streamReader.getElementText();
-                        messageMap.put("text", message);
-                        messages.add(messageMap);
+                        return streamReader.getElementText().equals(VALID_STATUS);
                     }
                 }
             }
-            return new WarcStatus(reportPath.toString(), status, messages, nonCompliantIds, OffsetDateTime.now());
+            return false;
         } finally {
             streamReader.close();
         }
