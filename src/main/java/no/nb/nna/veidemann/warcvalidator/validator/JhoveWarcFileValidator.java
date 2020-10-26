@@ -11,14 +11,13 @@ import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Objects;
 
 
 public class JhoveWarcFileValidator {
     private static final Logger logger = LoggerFactory.getLogger(JhoveWarcFileValidator.class);
     private final String release;
-    private final String name = "Veidemann WARC validator";
+    private final static String name = "Veidemann WARC validator";
     private final JhoveBase je;
 
     /**

@@ -3,8 +3,6 @@ package no.nb.nna.veidemann.warcvalidator;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
 import com.typesafe.config.ConfigFactory;
-import no.nb.nna.veidemann.warcvalidator.model.WarcStatus;
-import no.nb.nna.veidemann.warcvalidator.repo.RethinkRepository;
 import no.nb.nna.veidemann.warcvalidator.service.ValidationService;
 import no.nb.nna.veidemann.warcvalidator.settings.Settings;
 import no.nb.nna.veidemann.warcvalidator.validator.JhoveWarcFileValidator;
@@ -54,17 +52,13 @@ public class WarcValidator {
     public void start() {
         logger.info("Veidemann warcvalidator (v. {}) started", WarcValidator.class.getPackage().getImplementationVersion());
 
-        try (RethinkRepository database = new RethinkRepository(SETTINGS.getDbHost(), SETTINGS.getDbPort(),
-                SETTINGS.getDbUser(), SETTINGS.getDbPassword())) {
-
+        try {
             final JhoveWarcFileValidator warcFileValidator = new JhoveWarcFileValidator(SETTINGS.getJhoveConfigPath());
-            final ValidationService validationService = new ValidationService(database, warcFileValidator);
+            final ValidationService validationService = new ValidationService(warcFileValidator);
 
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                isRunning = false;
-            }));
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> isRunning = false));
 
-            startValidation(validationService);
+            runValidation(validationService);
         } catch (IOException e) {
             logger.error(e.getLocalizedMessage(), e);
             System.exit(1);
@@ -74,47 +68,49 @@ public class WarcValidator {
         }
     }
 
-    public void startValidation(ValidationService service) throws IOException {
-        while (isRunning) try (DirectoryStream<Path> warcPaths = service.findAllWarcs(warcsDirectory)) {
-            for (Path warcPath : warcPaths) {
-                if (!isRunning) {
-                    return;
-                }
-                logger.debug("Validating warc: {}", warcPath.toString());
-                final Path reportPath = service.validateWarcFile(warcPath);
+    public void runValidation(ValidationService service) throws IOException {
+        while (isRunning) {
+            try (DirectoryStream<Path> warcPaths = service.findAllWarcs(warcsDirectory)) {
+                for (Path warcPath : warcPaths) {
+                    if (!isRunning) {
+                        return;
+                    }
+                    logger.debug("Validating warc: {}", warcPath.toString());
+                    final Path reportPath = service.validateWarcFile(warcPath);
+                    final boolean isValid;
 
-                try {
-                    logger.debug("Inspecting report: {}", reportPath.toString());
-                    final WarcStatus warcStatus = service.inspectReport(reportPath);
+                    try {
+                        isValid = service.isWarcValid(reportPath);
+                    } catch (XMLStreamException ex) {
+                        logger.warn(ex.getLocalizedMessage(), ex);
+                        continue;
+                    }
 
-                    if (warcStatus.isValidAndWellFormed()) {
+                    if (isValid) {
                         logger.debug(warcPath + " is well-formed and valid.");
 
                         final Path deliveryPath = deliveryWarcsDirectory.resolve(service.checksumFilename(warcPath));
 
                         // copy warc to delivery
                         Files.copy(warcPath, deliveryPath, StandardCopyOption.REPLACE_EXISTING);
-
                         // set permissions/group on warc in delivery
                         service.setFileGroupId(deliveryPath, deliveryGroupId);
                         service.setFilePermissions(deliveryPath, deliveryPermissions);
 
-                        // move warc and report to validwarcs
+                        // move warc to validwarcs
                         Files.move(warcPath, validWarcsDirectory.resolve(warcPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
-                        Files.move(reportPath, validWarcsDirectory.resolve(reportPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                        // delete report
+                        Files.delete(reportPath);
                     } else {
-                        logger.debug(warcPath + " contains errors");
+                        logger.warn(warcPath + " contains errors");
 
-                        // move warc and report to invalidwarcs
+                        // move warc file and report to invalidwarcs
                         Files.move(warcPath, invalidWarcsDirectory.resolve(warcPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
                         Files.move(reportPath, invalidWarcsDirectory.resolve(reportPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
                     }
-                    service.saveWarcStatus(warcStatus);
-                } catch (XMLStreamException ex) {
-                    logger.warn(ex.getLocalizedMessage(), ex);
+
                 }
             }
-        } finally {
             try {
                 Thread.sleep(sleepTime * 1000);
             } catch (InterruptedException ex) {
