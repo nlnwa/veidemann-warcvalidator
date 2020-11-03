@@ -24,7 +24,7 @@ public class WarcValidator {
     private final static Path validWarcsDirectory;
     private final static Path invalidWarcsDirectory;
     private final static boolean deleteReportIfValid;
-
+    private final static boolean skipMove;
     private boolean isRunning;
 
     static {
@@ -33,7 +33,7 @@ public class WarcValidator {
         SETTINGS = ConfigBeanFactory.create(config, Settings.class);
 
         sleepTime = SETTINGS.getSleepTime();
-
+        skipMove = SETTINGS.isSkipMove();
         deleteReportIfValid = SETTINGS.isDeleteReportIfValid();
         warcsDirectory = Paths.get(SETTINGS.getWarcDir()); // New warcs is placed here
         validWarcsDirectory = Paths.get(SETTINGS.getValidWarcDir()); // Well-formed and valid warcs  is placed here
@@ -93,8 +93,10 @@ public class WarcValidator {
                     if (isValid) {
                         logger.debug(warcPath + " is valid");
 
-                        // move warc to validwarcs
-                        Files.move(warcPath, validWarcsDirectory.resolve(warcPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                        if (!skipMove) {
+                            // move warc to validwarcs
+                            Files.move(warcPath, validWarcsDirectory.resolve(warcPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                        }
                         if (!deleteReportIfValid) {
                             // delete report
                             Files.delete(reportPath);
@@ -102,9 +104,11 @@ public class WarcValidator {
                     } else {
                         logger.warn(warcPath + " is invalid");
 
-                        // move warc file and report to invalidwarcs
-                        Files.move(warcPath, invalidWarcsDirectory.resolve(warcPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
-                        Files.move(reportPath, invalidWarcsDirectory.resolve(reportPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                        if (!skipMove) {
+                            // move warc file and report to invalidwarcs
+                            Files.move(warcPath, invalidWarcsDirectory.resolve(warcPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                            Files.move(reportPath, invalidWarcsDirectory.resolve(reportPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                        }
                     }
 
                 }

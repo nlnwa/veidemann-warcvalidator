@@ -14,6 +14,8 @@ public class Settings {
 
     private boolean deleteReportIfValid;
 
+    private boolean skipMove;
+
     public String getWarcDir() {
         return warcDir;
     }
@@ -60,5 +62,13 @@ public class Settings {
 
     public void setDeleteReportIfValid(boolean deleteReportIfValid) {
         this.deleteReportIfValid = deleteReportIfValid;
+    }
+
+    public boolean isSkipMove() {
+        return skipMove;
+    }
+
+    public void setSkipMove(boolean skipMove) {
+        this.skipMove = skipMove;
     }
 }
