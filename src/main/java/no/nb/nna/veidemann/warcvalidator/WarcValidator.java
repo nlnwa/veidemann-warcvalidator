@@ -19,15 +19,13 @@ public class WarcValidator {
     private static final Settings SETTINGS;
 
     private final static int sleepTime;
-    private boolean isRunning;
-
-    private final static String deliveryPermissions;
-    private final static String deliveryGroupId;
 
     private final static Path warcsDirectory;
     private final static Path validWarcsDirectory;
     private final static Path invalidWarcsDirectory;
-    private final static Path deliveryWarcsDirectory;
+    private final static boolean deleteReportIfValid;
+
+    private boolean isRunning;
 
     static {
         Config config = ConfigFactory.load();
@@ -36,13 +34,10 @@ public class WarcValidator {
 
         sleepTime = SETTINGS.getSleepTime();
 
-        deliveryPermissions = SETTINGS.getDeliveryPermissions();
-        deliveryGroupId = SETTINGS.getDeliveryGroupId();
-
+        deleteReportIfValid = SETTINGS.isDeleteReportIfValid();
         warcsDirectory = Paths.get(SETTINGS.getWarcDir()); // New warcs is placed here
         validWarcsDirectory = Paths.get(SETTINGS.getValidWarcDir()); // Well-formed and valid warcs  is placed here
         invalidWarcsDirectory = Paths.get(SETTINGS.getInvalidWarcDir()); // Warcs this isn't Well-formed and valid is placed here
-        deliveryWarcsDirectory = Paths.get(SETTINGS.getDeliveryWarcDir()); // Valid warcs get copied here for further storing
     }
 
     public WarcValidator() {
@@ -68,6 +63,15 @@ public class WarcValidator {
         }
     }
 
+    /**
+     * Run validation loop:
+     * 1. List warcs in path
+     * 2. For each warc generate report
+     * a. If report says warc is valid, then delete report (if configured such) and move warc to valid directory
+     * b. Else move report and warc to invalid directory
+     *
+     * @param service Validation service that can validate warc files and determine validity
+     */
     public void runValidation(ValidationService service) throws IOException {
         while (isRunning) {
             try (DirectoryStream<Path> warcPaths = service.findAllWarcs(warcsDirectory)) {
@@ -87,22 +91,16 @@ public class WarcValidator {
                     }
 
                     if (isValid) {
-                        logger.debug(warcPath + " is well-formed and valid.");
-
-                        final Path deliveryPath = deliveryWarcsDirectory.resolve(service.checksumFilename(warcPath));
-
-                        // copy warc to delivery
-                        Files.copy(warcPath, deliveryPath, StandardCopyOption.REPLACE_EXISTING);
-                        // set permissions/group on warc in delivery
-                        service.setFileGroupId(deliveryPath, deliveryGroupId);
-                        service.setFilePermissions(deliveryPath, deliveryPermissions);
+                        logger.debug(warcPath + " is valid");
 
                         // move warc to validwarcs
                         Files.move(warcPath, validWarcsDirectory.resolve(warcPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
-                        // delete report
-                        Files.delete(reportPath);
+                        if (!deleteReportIfValid) {
+                            // delete report
+                            Files.delete(reportPath);
+                        }
                     } else {
-                        logger.warn(warcPath + " contains errors");
+                        logger.warn(warcPath + " is invalid");
 
                         // move warc file and report to invalidwarcs
                         Files.move(warcPath, invalidWarcsDirectory.resolve(warcPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);

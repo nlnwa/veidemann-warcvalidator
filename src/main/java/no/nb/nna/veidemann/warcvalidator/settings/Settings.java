@@ -4,19 +4,15 @@ public class Settings {
 
     private String warcDir;
 
-    private String deliveryWarcDir;
-
     private String validWarcDir;
 
     private String invalidWarcDir;
 
     private String jhoveConfigPath;
 
-    private String deliveryPermissions;
-
-    private String deliveryGroupId;
-
     private int sleepTime;
+
+    private boolean deleteReportIfValid;
 
     public String getWarcDir() {
         return warcDir;
@@ -24,14 +20,6 @@ public class Settings {
 
     public void setWarcDir(String warcDir) {
         this.warcDir = warcDir;
-    }
-
-    public String getDeliveryWarcDir() {
-        return deliveryWarcDir;
-    }
-
-    public void setDeliveryWarcDir(String deliveryWarcDir) {
-        this.deliveryWarcDir = deliveryWarcDir;
     }
 
     public String getJhoveConfigPath() {
@@ -66,20 +54,11 @@ public class Settings {
         this.validWarcDir = validWarcDir;
     }
 
-    public String getDeliveryPermissions() {
-        return this.deliveryPermissions;
+    public boolean isDeleteReportIfValid() {
+        return deleteReportIfValid;
     }
 
-    public void setDeliveryPermissions(String permission) {
-        this.deliveryPermissions = permission;
-    }
-
-
-    public String getDeliveryGroupId() {
-        return deliveryGroupId;
-    }
-
-    public void setDeliveryGroupId(String deliveryGroupId) {
-        this.deliveryGroupId = deliveryGroupId;
+    public void setDeleteReportIfValid(boolean deleteReportIfValid) {
+        this.deleteReportIfValid = deleteReportIfValid;
     }
 }

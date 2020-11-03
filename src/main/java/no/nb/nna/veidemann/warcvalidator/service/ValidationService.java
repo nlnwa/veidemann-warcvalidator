@@ -1,23 +1,20 @@
 package no.nb.nna.veidemann.warcvalidator.service;
 
 import no.nb.nna.veidemann.warcvalidator.validator.JhoveWarcFileValidator;
-import org.apache.commons.codec.digest.DigestUtils;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.*;
-import java.nio.file.attribute.*;
-import java.util.Set;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class ValidationService {
     private final static String COMPRESSED_AND_OPEN_WARC_SUFFIX = ".warc.gz.open";
     private final static String OPEN_WARC_SUFFIX = ".warc.open";
     private final static String WARC_SUFFIX = ".warc";
     private final static String COMPRESSED_WARC_SUFFIX = ".warc.gz";
-    private final static String MD5_CHECKSUM_PREFIX = "-md5_";
     private final static String REPORT_SUFFIX = ".xml";
     private final static String VALID_STATUS = "Well-Formed and valid";
 
@@ -40,43 +37,7 @@ public class ValidationService {
     }
 
     /**
-     * Calculate checksum of file and insert checksum into path
-     *
-     * @param path path to file to checksum
-     * @return path of file with checksum
-     */
-    public Path checksumFilename(Path path) throws IOException {
-        return insertChecksumIntoPath(path, md5sum(path)).getFileName();
-    }
-
-    /**
-     * Generates md5sum
-     *
-     * @param path path of file to generate checksumFilename from
-     * @return checksumFilename
-     */
-    private String md5sum(Path path) throws IOException {
-        try (InputStream fis = Files.newInputStream(path)) {
-            return DigestUtils.md5Hex(fis);
-        }
-    }
-
-    /**
-     * Insert a checksum into given path
-     *
-     * @param path     path of checksummed file
-     * @param checksum checksum
-     * @return path with checksum
-     */
-    private Path insertChecksumIntoPath(Path path, String checksum) {
-        String[] parts = path.toString().split("(?=.warc)");
-        String name = parts[0];
-        String ending = parts[1];
-        return Paths.get(name + MD5_CHECKSUM_PREFIX + checksum + ending);
-    }
-
-    /**
-     * Parse validation report
+     * Parse validation report and determine if warc is valid or not
      *
      * @param reportPath path of report
      * @return warc status
@@ -101,33 +62,10 @@ public class ValidationService {
     }
 
     /**
-     * Set file permissions on file
-     *
-     * @param path    path of file
-     * @param groupID group ID of file
-     */
-    public void setFileGroupId(Path path, String groupID) throws IOException {
-        UserPrincipalLookupService lookupService = FileSystems.getDefault().getUserPrincipalLookupService();
-        GroupPrincipal group = lookupService.lookupPrincipalByGroupName(groupID);
-        Files.getFileAttributeView(path, PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).setGroup(group);
-    }
-
-    /**
-     * Set permissions
-     *
-     * @param path        path of file to set permissions on
-     * @param permissions file permissions (e.g. "rwxrw-r--")
-     */
-    public void setFilePermissions(Path path, String permissions) throws IOException {
-        Set<PosixFilePermission> perms = PosixFilePermissions.fromString(permissions);
-        Files.setPosixFilePermissions(path, perms);
-    }
-
-    /**
-     * Used to find all warc files in a directory which is ready to be processed.
+     * Find all warc files in a directory which is ready to be processed.
      *
      * @param directory File directory
-     * @return Array of warc files
+     * @return Stream of warc paths
      */
 
     public DirectoryStream<Path> findAllWarcs(Path directory) throws IOException {

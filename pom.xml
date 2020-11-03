@@ -22,7 +22,7 @@
     </licenses>
 
     <name>WarcValidator</name>
-    <description>Validate WARC files using Jhove</description>
+    <description>Validate WARC files using JHOVE WARC module</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
