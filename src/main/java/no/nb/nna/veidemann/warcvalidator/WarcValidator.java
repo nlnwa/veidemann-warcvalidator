@@ -97,7 +97,7 @@ public class WarcValidator {
                             // move warc to validwarcs
                             Files.move(warcPath, validWarcsDirectory.resolve(warcPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
                         }
-                        if (!deleteReportIfValid) {
+                        if (deleteReportIfValid) {
                             // delete report
                             Files.delete(reportPath);
                         }
