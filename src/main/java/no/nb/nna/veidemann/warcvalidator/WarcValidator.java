@@ -100,6 +100,8 @@ public class WarcValidator {
                         if (deleteReportIfValid) {
                             // delete report
                             Files.delete(reportPath);
+                        } else if (!skipMove) {
+                            Files.move(reportPath, validWarcsDirectory.resolve(reportPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
                         }
                     } else {
                         logger.warn(warcPath + " is invalid");
