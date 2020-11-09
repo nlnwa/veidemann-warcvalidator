@@ -22,7 +22,7 @@
     </licenses>
 
     <name>WarcValidator</name>
-    <description>Validate WARC files using Jhove</description>
+    <description>Validate WARC files using JHOVE WARC module</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -137,7 +137,7 @@
             <plugin>
                 <groupId>com.google.cloud.tools</groupId>
                 <artifactId>jib-maven-plugin</artifactId>
-                <version>2.5.2</version>
+                <version>2.6.0</version>
                 <configuration>
                     <to>
                         <image>docker.io/norsknettarkiv/${project.artifactId}</image>
