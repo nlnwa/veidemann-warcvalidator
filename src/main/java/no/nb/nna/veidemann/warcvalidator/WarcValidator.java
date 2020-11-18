@@ -25,6 +25,7 @@ public class WarcValidator {
     private final static Path invalidWarcsDirectory;
     private final static boolean deleteReportIfValid;
     private final static boolean skipMove;
+    private final static boolean generateChecksumFile;
     private boolean isRunning;
 
     static {
@@ -35,6 +36,7 @@ public class WarcValidator {
         sleepTime = SETTINGS.getSleepTime();
         skipMove = SETTINGS.isSkipMove();
         deleteReportIfValid = SETTINGS.isDeleteReportIfValid();
+        generateChecksumFile = SETTINGS.isGenerateChecksumFile();
         warcsDirectory = Paths.get(SETTINGS.getWarcDir()); // New warcs is placed here
         validWarcsDirectory = Paths.get(SETTINGS.getValidWarcDir()); // Well-formed and valid warcs  is placed here
         invalidWarcsDirectory = Paths.get(SETTINGS.getInvalidWarcDir()); // Warcs this isn't Well-formed and valid is placed here
@@ -92,10 +94,18 @@ public class WarcValidator {
 
                     if (isValid) {
                         logger.debug(warcPath + " is valid");
+                        Path checksumPath = null;
+
+                        if (generateChecksumFile) {
+                            checksumPath = service.generateChecksumFile(warcPath);
+                        }
 
                         if (!skipMove) {
                             // move warc to validwarcs
                             Files.move(warcPath, validWarcsDirectory.resolve(warcPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                            if (generateChecksumFile) {
+                                Files.move(checksumPath, validWarcsDirectory.resolve(checksumPath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                            }
                         }
                         if (deleteReportIfValid) {
                             // delete report

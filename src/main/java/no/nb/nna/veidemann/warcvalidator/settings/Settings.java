@@ -16,6 +16,8 @@ public class Settings {
 
     private boolean skipMove;
 
+    private boolean generateChecksumFile;
+
     public String getWarcDir() {
         return warcDir;
     }
@@ -70,5 +72,13 @@ public class Settings {
 
     public void setSkipMove(boolean skipMove) {
         this.skipMove = skipMove;
+    }
+
+    public boolean isGenerateChecksumFile() {
+        return generateChecksumFile;
+    }
+
+    public void setGenerateChecksumFile(boolean generateChecksumFile) {
+        this.generateChecksumFile = generateChecksumFile;
     }
 }
