@@ -1,11 +1,13 @@
 package no.nb.nna.veidemann.warcvalidator.service;
 
 import no.nb.nna.veidemann.warcvalidator.validator.JhoveWarcFileValidator;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -77,5 +79,25 @@ public class ValidationService {
 
             return isWarc && !isOpen;
         });
+    }
+
+    public Path generateChecksumFile(Path path) throws IOException {
+        final String sep = "  ";
+        Path sumPath = path.resolveSibling(path.getFileName() + ".md5");
+        String sum = md5sum(path);
+        Files.writeString(sumPath, sum + sep + path.getFileName().toString() + System.lineSeparator());
+        return sumPath;
+    }
+
+    /**
+     * Generates md5sum
+     *
+     * @param path path of file to generate checksumFilename from
+     * @return checksumFilename
+     */
+    protected String md5sum(Path path) throws IOException {
+        try (InputStream fis = Files.newInputStream(path)) {
+            return DigestUtils.md5Hex(fis);
+        }
     }
 }

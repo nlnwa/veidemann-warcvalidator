@@ -1,16 +1,16 @@
 package no.nb.nna.veidemann.warcvalidator.validator;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 
 public class JhoveWarcFileValidatorTest {
 
-    @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
+    @TempDir
+    public File temporaryFolder;
 
     @Test
     public void validate() throws IOException {
@@ -22,7 +22,7 @@ public class JhoveWarcFileValidatorTest {
                              (path.toString().endsWith(".warc") ||
                                      path.toString().endsWith(".warc.gz")))) {
             for (Path warcPath : warcPaths) {
-                Path reportPath = folder.getRoot().toPath().resolve(warcPath.getFileName().toString() + ".xml");
+                Path reportPath = temporaryFolder.toPath().resolve(warcPath.getFileName().toString() + ".xml");
                 jwv.validate(warcPath, reportPath);
             }
         } catch (NoSuchFileException e) {
